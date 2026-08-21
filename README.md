@@ -28,7 +28,7 @@ Frontend:
 
 Core:
 
-  - Framework: NET 10
+  - Framework: ASP NET CORE 10
   - Lenguaje: C#
   - Arquitectura: N-Capas
   - Base de datos: PostgreSQL
@@ -39,3 +39,5 @@ Agentes:
   - API: Deepsek
   - Base de datos: Redis (Cache)
 
+Mensajeria:
+  -RabbitMQ
