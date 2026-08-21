@@ -40,4 +40,5 @@ Agentes:
   - Base de datos: Redis (Cache)
 
 Mensajeria:
-  -RabbitMQ
+
+  - RabbitMQ
