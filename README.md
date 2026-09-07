@@ -188,7 +188,7 @@ El equipo trabaja bajo **Scrum**, con **sprints de dos semanas** a lo largo de l
 
 ## Documentación adicional
 
-La documentación extendida del proyecto (especificaciones de arquitectura, catálogo de casos de uso, storyboards, análisis de cumplimiento normativo) se encuentra en la carpeta [`docs/`](docs/) de este repositorio.
+La documentación extendida del proyecto (especificaciones de arquitectura, catálogo de casos de uso, storyboards, análisis de cumplimiento normativo) se encuentra en la carpeta Fase 01/ de este repositorio.
 
 ---
 
