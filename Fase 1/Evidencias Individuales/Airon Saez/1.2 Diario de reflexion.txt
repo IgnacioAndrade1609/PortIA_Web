@@ -1,0 +1,113 @@
+Ensayo
+
+Revisa la malla de tu carrera, piensa en las asignaturas o certificados de competencias que has cursado hasta ahora. Responde: 
+
+¿Cuáles son las asignaturas o certificados que más te gustaron y/o se relacionan con tus intereses profesionales? ¿Qué es lo que más te gustó de cada uno?
+
+ 
+
+A partir de las certificaciones que obtienes a lo largo de la carrera ¿Existe valor en la o las certificaciones obtenidas? ¿Por qué? 
+Respuesta
+
+    Las asignaturas que mas me gustaron fueron Modelamiento de base de datos, programación movile y gestión de proyectos. lo que mas me gustaron de estas asignaturas fueron el tremendo acercamiento que me dieron al mundo laboral real por decirlo de alguna forma. aunque de cada uno logre encontrar aprendizajes muy valiosos como, el auto aprendizaje , Reforzar la lectura y la forma en la que debe pensar un programador.
+    Si, la de python debido a que es uno de los lenguajes mas fáciles de aprender y con mayor parecencia en el mercado laboral, el de AWS debido a que fue un buen primer acercamiento a las tecnologías serverless.
+
+Pregunta 2
+2
+Ensayo
+
+Revisa las competencias y unidades de competencias correspondientes a cada asignatura de la malla de tu carrera. Marca en verde las competencias o unidades de competencia que consideras son tus fortalezas y en rojo las que requieren ser fortalecidas. A partir de este ejercicio responde:
+
+¿Cuáles consideras que tienes más desarrolladas y te sientes más seguro aplicando? ¿En cuáles te sientes más débil y requieren ser fortalecidas?
+Respuesta
+
+-ANÁLISIS Y PLANIFICACIÓN DE REQUERIMIENTOS INFORMÁTICOS
+
+-PROGRAMACIÓN DE SOFTWARE
+
+-ANÁLISIS Y DESARROLLO DE MODELOS DE DATOS
+
+-CALIDAD DE SOFTWARE
+
+-INTELIGENCIA DE NEGOCIOS
+
+-INTERNACIONAL EN INGLÉS INTERMEDIO ALTO
+
+-GESTIÓN DE PROYECTOS INFORMÁTICOS
+
+-ARQUITECTURA DE SOFTWARE
+Pregunta 3
+3
+Ensayo
+
+A partir de las respuestas anteriores y el perfil de egreso de tu carrera (competencias), responde las siguientes preguntas:
+
+¿Cuáles son tus principales intereses profesionales? ¿Hay alguna área de desempeño que te interese más?
+
+¿Cuáles son las principales competencias que se relacionan con tus intereses profesionales? ¿Hay alguna de ellas que sientas que requieres especialmente fortalecer? 
+
+¿Cómo te gustaría que fuera tu escenario laboral en 5 años más? ¿Qué te gustaría estar haciendo? 
+Respuesta
+
+1.mi meta es convertirme en jefe de proyectos, que participe en conversación sobre arquitectura, gestion de proyecto y codigo.
+
+2.Si, el desarrollo full stack y estas serian las competencias:
+
+-ANÁLISIS Y PLANIFICACIÓN DE REQUERIMIENTOS INFORMÁTICOS
+
+-PROGRAMACIÓN DE SOFTWARE
+
+-ANÁLISIS Y DESARROLLO DE MODELOS DE DATOS
+
+-CALIDAD DE SOFTWARE
+
+-GESTIÓN DE PROYECTOS INFORMÁTICOS
+
+-ARQUITECTURA DE SOFTWARE
+
+3.Si quiero fortalecer mas la programación de software
+
+4.Siendo sennior
+Pregunta 4
+4
+Ensayo
+
+Finalmente, piensa en el proyecto que desarrollarás en APT y responde a las siguientes preguntas:
+
+Los Proyectos APT que ya habías diseñado como plan de trabajo en el curso anterior, ¿se relacionan con tus proyecciones profesionales actuales? ¿Cuál se relaciona más? ¿Requiere ajuste?
+
+
+Si no hay ninguno que se relacione lo suficiente:
+
+¿Qué área(s) de desempeño y competencias debería abordar este proyecto APT?
+
+¿Qué tipo de proyecto podría ayudarte más en tu desarrollo profesional?
+
+¿En qué contexto se debería situar este Proyecto APT?
+Respuesta
+
+Si, ya que vimos desarrollo ful stack y gestion de proyectos a su vez que arquitectura de software
+
+
+1:
+
+-ANÁLISIS Y PLANIFICACIÓN DE REQUERIMIENTOS INFORMÁTICOS
+
+-PROGRAMACIÓN DE SOFTWARE
+
+-ANÁLISIS Y DESARROLLO DE MODELOS DE DATOS
+
+-CALIDAD DE SOFTWARE
+
+-INTELIGENCIA DE NEGOCIOS
+
+-INTERNACIONAL EN INGLÉS INTERMEDIO ALTO
+
+-GESTIÓN DE PROYECTOS INFORMÁTICOS
+
+ARQUITECTURA DE SOFTWARE
+
+
+2.Uno donde se simule la maxima fiabilidad a los proyectos que surgen en la vida cotidiana
+
+3.En contexto real
