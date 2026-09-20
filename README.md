@@ -18,7 +18,7 @@
 
 | Integrante | Rol principal |
 |---|---|
-| **Ignacio Andrade** | Arquitectura de software y Core (.NET 10 / Clean Architecture) |
+| **Ignacio Andrade** | Arquitectura de software y Core (.NET 10 / N-Capas) |
 | **Nicolas Soto** | Frontend Web (Angular) |
 | **Airon Saez** | Agentes de Inteligencia Artificial (Python / FastAPI) |
 
@@ -50,7 +50,7 @@ PortIA resuelve esto al:
 
 ## Arquitectura de la solución
 
-PortIA está construido bajo **Clean Architecture** sobre .NET 10, aplicando el **Principio de Inversión de Dependencias (DIP)** y el **patrón Strategy** para aislar el núcleo de negocio de las integraciones externas más volátiles: la lectura de documentos y la conexión con los terminales portuarios.
+PortIA está construido bajo **N-Capas** sobre .NET 10, aplicando el **Principio de Inversión de Dependencias (DIP)** y el **patrón Strategy** para aislar el núcleo de negocio de las integraciones externas más volátiles: la lectura de documentos y la conexión con los terminales portuarios.
 
 El punto más importante de la arquitectura es la **estrategia dual de verificación portuaria**: el sistema intenta primero obtener el estado real de un contenedor mediante *web scraping* (`ScrapingStrategy`, con Playwright) contra el portal del terminal. Si esa estrategia falla el portal cambia, se cae, o bloquea la IP, un mecanismo de **Circuit Breaker** conmuta automáticamente hacia una estrategia simulada (`MockStrategy`), garantizando que el sistema nunca se detenga por la volatilidad de un tercero.
 
@@ -61,14 +61,14 @@ El punto más importante de la arquitectura es la **estrategia dual de verificac
 | Capa | Responsabilidad | Tecnología |
 |---|---|---|
 | **Usuario** | Dashboard, notificaciones, autenticación | Angular + SignalR |
-| **Servicios Core** | Casos de uso, motor de reglas de riesgo, estrategia de resiliencia | .NET 10 · Clean Architecture |
+| **Servicios Core** | Casos de uso, motor de reglas de riesgo, estrategia de resiliencia | .NET 10 · N-Capas |
 | **Persistencia** | Metadatos y datos estructurados / objetos binarios (PDFs) | PostgreSQL (JSONB) · Cloudflare R2 |
 | **Mensajería** | Bus de eventos asíncrono entre Core y Agentes | RabbitMQ |
 | **Agentes especializados** | Lectura IA de documentos, verificación portuaria | Python · FastAPI |
 
 ### Principios de diseño aplicados
 
-- **Clean Architecture**: separación estricta entre Dominio, Aplicación e Infraestructura.
+- **N-Capas**: separación de responsabilidades entre Presentación (WebApi), Servicios, Inyección de Dependencias y Configuración.
 - **DIP (Dependency Inversion Principle)**: el Core depende de interfaces, nunca de implementaciones concretas de terceros.
 - **Strategy + Circuit Breaker**: resiliencia ante la volatilidad de servicios externos (portales portuarios).
 - **Human-in-the-Loop**: ninguna comunicación externa (correos, notificaciones formales) se envía sin aprobación explícita de un usuario.
@@ -98,7 +98,7 @@ PortIA está dividido en tres repositorios independientes, comunicados entre sí
 
 - **Framework:** ASP.NET Core 10
 - **Lenguaje:** C#
-- **Arquitectura:** Clean Architecture (Dominio / Aplicación / Infraestructura / Presentación)
+- **Arquitectura:** N-Capas (PortIA.Core.WebApi / PortIA.Core.Services / PortIA.Core.DependencyInjection / PortIA.Core.Configuration)
 - **Base de datos:** PostgreSQL
 
 ### Agentes de IA (PortIA_Agentes)
@@ -120,46 +120,66 @@ PortIA está dividido en tres repositorios independientes, comunicados entre sí
 
 ## Instrucciones para ejecutar el proyecto localmente
 
-> El sistema está dividido en 3 repositorios. Estos pasos asumen que ya clonaste los tres (`PortIA_Web`, `PortIA_Core`, `PortIA_Agentes`) en una misma carpeta raíz.
+> El sistema está dividido en 3 repositorios. Clona los tres (`PortIA_Web`, `PortIA_Core`, `PortIA_Agentes`) dentro de una misma carpeta raíz, al mismo nivel entre ellos.
 
 ### Requisitos previos
 
-- [Docker](https://www.docker.com/) y Docker Compose
-- [Node.js](https://nodejs.org/) LTS y npm (para desarrollar el frontend)
-- [.NET 10 SDK](https://dotnet.microsoft.com/) (opcional, solo si vas a correr el Core fuera de Docker)
-- [Python 3.11+](https://www.python.org/) (opcional, solo si vas a correr los Agentes fuera de Docker)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+- [Node.js LTS](https://nodejs.org/) y Angular CLI (`npm install -g @angular/cli`), solo si quieres correr el frontend en modo desarrollo
 
 ### 1. Clonar los repositorios
 
 ```bash
-git clone https://github.com/<org>/PortIA_Web.git
-git clone https://github.com/<org>/PortIA_Core.git
-git clone https://github.com/<org>/PortIA_Agentes.git
+git clone https://github.com/IgnacioAndrade1609/PortIA_Web.git
+git clone https://github.com/IgnacioAndrade1609/PortIA_Core.git
+git clone https://github.com/IgnacioAndrade1609/PortIA_Agentes.git
 ```
 
-### 2. Configurar variables de entorno
+Deben quedar los tres en la misma carpeta, al mismo nivel:
 
-Copia el archivo de ejemplo y completa tus propios valores (credenciales de base de datos, API key del modelo de IA, credenciales de Cloudflare R2, etc.):
-
-```bash
-cp .env.example .env
+```
+CAPSTONE/
+├── PortIA_Web/
+├── PortIA_Core/
+└── PortIA_Agentes/
 ```
 
-### 3. Levantar toda la infraestructura con Docker Compose
+### 2. Levantar todo el backend con Docker
 
-Desde la carpeta que contiene el `docker-compose.yml` (PostgreSQL, RabbitMQ, Redis, MinIO como sustituto local de Cloudflare R2, Core .NET y Agentes Python):
+El archivo `docker-compose.yml` vive en este mismo repositorio (`PortIA_Web`). Cópialo a la carpeta raíz `CAPSTONE/` (un nivel arriba de los 3 repos) y ejecuta, desde ahí:
 
 ```bash
 docker-compose up --build
 ```
 
-Esto deja disponibles, entre otros:
+Esto levanta 5 contenedores:
 
-- API del Core: `http://localhost:5000` (Swagger en `http://localhost:5000/swagger`)
-- RabbitMQ Management: `http://localhost:15672`
-- MinIO (S3/R2 local): `http://localhost:9001`
+| Servicio | Puerto local | Qué es |
+|---|---|---|
+| `portia-postgres` | `5433` | Base de datos PostgreSQL |
+| `portia-minio` | `9000` (API) / `9001` (consola web) | Almacenamiento de objetos (simula Cloudflare R2) |
+| `portia-redis` | `6379` | Caché en memoria |
+| `portia-core` | `8080` | API del Core en .NET 10 |
+| `portia-agentes` | `8000` | Agente de IA en Python (FastAPI) |
+
+> Nota: PostgreSQL corre en el puerto `5433` (no el `5432` estándar) porque suele chocar con instalaciones locales de PostgreSQL ya existentes en el computador.
+
+### 3. Verificar que todo esté corriendo
+
+```bash
+docker ps
+```
+
+Deberías ver los 5 contenedores con estado `Up`.
+
+- **API del Core (Swagger):** http://localhost:8080/swagger
+- **API del Agente (Docs):** http://localhost:8000/docs
+- **Consola de MinIO:** http://localhost:9001 (usuario `portia`, contraseña `portia12345`)
+- **PostgreSQL:** conéctate con [DBeaver](https://dbeaver.io/) u otro cliente a `localhost:5433`, base `portia_db`, usuario `portia`, contraseña `portia123`
 
 ### 4. Levantar el frontend en modo desarrollo
+
+El frontend Angular no está dockerizado (se ejecuta en modo desarrollo):
 
 ```bash
 cd PortIA_Web
@@ -167,7 +187,7 @@ npm install
 npm start
 ```
 
-La aplicación queda disponible en `http://localhost:4200`.
+La aplicación queda disponible en http://localhost:4200
 
 ---
 

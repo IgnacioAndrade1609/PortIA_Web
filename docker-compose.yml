@@ -1,0 +1,56 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: portia-postgres
+    environment:
+      POSTGRES_USER: portia
+      POSTGRES_PASSWORD: portia123
+      POSTGRES_DB: portia_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  minio:
+    image: quay.io/minio/minio
+    container_name: portia-minio
+    environment:
+      MINIO_ROOT_USER: portia
+      MINIO_ROOT_PASSWORD: portia12345
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  redis:
+    image: redis:7
+    container_name: portia-redis
+    ports:
+      - "6379:6379"
+
+  core:
+    build: ./PortIA_Core
+    container_name: portia-core
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=portia_db;Username=portia;Password=portia123"
+    depends_on:
+      - postgres
+
+  agentes:
+    build: ./PortIA_Agentes
+    container_name: portia-agentes
+    ports:
+      - "8000:8000"
+    environment:
+      REDIS_HOST: redis
+    depends_on:
+      - redis
+
+volumes:
+  postgres_data:
+  minio_data:
