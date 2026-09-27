@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>PortIA - Panel de control</title>
+</head>
+<body>
+
+    <!-- Encabezado y Navegación -->
+    <header>
+        <p>PortIA</p>
+        <nav>
+            <ul>
+                <li><a href="#">Inicio</a></li>
+                <li><a href="#">Contenedores</a></li>
+                <li><a href="#">Buques</a></li>
+                <li><a href="#">Reservas</a></li>
+                <li><a href="#">Reportes</a></li>
+            </ul>
+        </nav>
+        <button type="button">Admin ▼</button>
+    </header>
+
+    <!-- Contenido Principal -->
+    <main>
+        <h1>Panel de control</h1>
+
+        <!-- Tarjetas de Resumen / Métricas -->
+        <section>
+            <div>
+                <h2>12.480</h2>
+                <p>Contenedores totales</p>
+            </div>
+            <div>
+                <h2>3.215</h2>
+                <p>En tránsito</p>
+            </div>
+            <div>
+                <h2>6.904</h2>
+                <p>En puerto</p>
+            </div>
+            <div>
+                <h2>412</h2>
+                <p>En mantenimiento</p>
+            </div>
+        </section>
+
+        <!-- Barra de Búsqueda, Filtros y Acción -->
+        <section>
+            <form>
+                <input type="search" placeholder="Buscar por ID de contenedor (ej. MSCU1234567)">
+                
+                <select>
+                    <option>Estado ▼</option>
+                </select>
+
+                <select>
+                    <option>Naviera ▼</option>
+                </select>
+
+                <button type="button">+ Nuevo contenedor</button>
+            </form>
+        </section>
+
+        <!-- Tabla de Datos -->
+        <table>
+            <thead>
+                <tr>
+                    <th>ID Contenedor</th>
+                    <th>Tipo</th>
+                    <th>Naviera</th>
+                    <th>Ubicación</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>MSCU1234567</td>
+                    <td>40' HC</td>
+                    <td>MSC</td>
+                    <td>Puerto de Valparaíso</td>
+                    <td>En tránsito</td>
+                    <td>
+                        <a href="#">Ver</a> · <a href="#">Editar</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>MAEU7654321</td>
+                    <td>20' DRY</td>
+                    <td>Maersk</td>
+                    <td>Puerto de San Antonio</td>
+                    <td>En puerto</td>
+                    <td>
+                        <a href="#">Ver</a> · <a href="#">Editar</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>CMAU4455667</td>
+                    <td>40' Reefer</td>
+                    <td>CMA CGM</td>
+                    <td>Buque CMA Andes</td>
+                    <td>En tránsito</td>
+                    <td>
+                        <a href="#">Ver</a> · <a href="#">Editar</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>HLXU9988776</td>
+                    <td>20' DRY</td>
+                    <td>Hapag-Lloyd</td>
+                    <td>Depósito Central</td>
+                    <td>Mantenimiento</td>
+                    <td>
+                        <a href="#">Ver</a> · <a href="#">Editar</a>
+                    </td>
+                </tr>
+                <tr>
+                    <td>COSU3322110</td>
+                    <td>40' DRY</td>
+                    <td>COSCO</td>
+                    <td>Puerto del Callao</td>
+                    <td>Disponible</td>
+                    <td>
+                        <a href="#">Ver</a> · <a href="#">Editar</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Pie de Tabla y Paginación -->
+        <footer>
+            <p>Mostrando 1-5 de 12.480 contenedores</p>
+            <nav>
+                <a href="#">« Anterior</a>
+                <span>1</span>
+                <a href="#">2</a>
+                <a href="#">3</a>
+                <span>...</span>
+                <a href="#">2496</a>
+                <a href="#">Siguiente »</a>
+            </nav>
+        </footer>
+    </main>
+
+</body>
+</html>
