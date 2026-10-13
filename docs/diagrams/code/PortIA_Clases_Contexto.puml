@@ -1,0 +1,295 @@
+@startuml PortIA_Clases_Contexto
+' ============================================================
+' CONTROL DE VERSIONES
+' Proyecto : PortIA - Gestion de Contenedores y Multas Portuarias
+'            (Demurrage / Detention)
+' Diagrama : Modelo conceptual del dominio (vista de contexto)
+' Autor    : Ignacio Andrade (Capstone_003V - DuocUC)
+' ------------------------------------------------------------
+' Version | Fecha       | Autor            | Cambio
+' 1.0.0   | 2026-10-13  | Ignacio Andrade  | Version inicial: conceptos del negocio
+'         |             |                  | (personas, embarque, BL, contenedor,
+'         |             |                  | multas, semaforo de riesgo, alertas y
+'         |             |                  | comunicacion con aprobacion humana).
+'         |             |                  | Fuera de alcance: cliente, Core,
+'         |             |                  | agentes e infraestructura.
+' ============================================================
+
+title PortIA - Contexto del negocio (modelo conceptual)\nv1.0.0 - 2026-10-13
+
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam packageStyle rectangle
+skinparam ArrowColor #546E7A
+skinparam ArrowFontSize 11
+skinparam defaultFontSize 11
+skinparam nodesep 12
+skinparam ranksep 24
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #37474F
+  HeaderBackgroundColor #ECEFF1
+  FontSize 11
+}
+skinparam package {
+  BackgroundColor #FAFAFA
+  BorderColor #90A4AE
+  FontStyle bold
+}
+hide empty members
+
+' ============================================================
+' PERSONAS
+' ============================================================
+
+package "Personas" #FDF3E7 {
+  abstract class Usuario {
+    nombre
+    email
+    vigente
+  }
+
+  class AnalistaComEx
+  class JefeDeAnalistas
+  class Administrador
+  class AgenteDeAduana {
+    nombre
+    email
+  }
+}
+
+' ============================================================
+' EMBARQUE Y DOCUMENTOS
+' ============================================================
+
+package "Embarque y documentos" #EEF4FB {
+  class Embarque {
+    fecha de registro
+    estado : Pendiente / Procesando / Completo / Error
+    puerto de destino
+  }
+
+  class Documento {
+    tipo : BL / Factura / Packing List
+    archivo (fuera del sistema)
+    huella
+    confianza de extraccion
+    requiere revision humana
+    contiene datos personales
+    retencion hasta
+  }
+}
+
+' ============================================================
+' CONTENEDOR Y SU ENTORNO
+' ============================================================
+
+package "Contenedor y su entorno" #EAF7EF {
+  class Contenedor {
+    numero
+    puerto de destino
+    eta (fecha estimada de arribo)
+    arribo real
+    fecha de retiro
+    dias libres demurrage
+    dias libres detention
+    deadline demurrage
+    deadline detention
+    estado en el terminal
+  }
+
+  class Naviera {
+    nombre
+    notas de formato del BL
+  }
+
+  class Puerto {
+    nombre
+    pais
+  }
+
+  class Terminal {
+    codigo
+    nombre
+  }
+
+  class CondicionClimatica {
+    descripcion : Sin alerta / Marejada / Cierre de puerto
+  }
+
+  class Hito {
+    descripcion
+    origen : Usuario / IA / Scraper
+    fecha
+  }
+}
+
+' ============================================================
+' RIESGO, MULTAS Y ALERTAS
+' ============================================================
+
+package "Riesgo, multas y alertas" #F3F0FA {
+  class Alerta {
+    mensaje
+    leida
+    fecha de emision
+  }
+
+  enum NivelDeRiesgo {
+    OK
+    WARNING
+    CRITICAL
+    OVERDUE
+  }
+
+  enum TipoDeMulta {
+    DEMURRAGE
+    DETENTION
+  }
+}
+
+' ============================================================
+' COMUNICACION Y TRAZABILIDAD
+' ============================================================
+
+package "Comunicacion y trazabilidad" #FCF2F2 {
+  class Comunicacion {
+    canal : Email / Telegram
+    destinatario
+    estado : Borrador / Pendiente de aprobacion / Enviada
+    fecha
+  }
+
+  class RegistroDeAuditoria {
+    entidad afectada
+    accion : Crear / Actualizar / Leer
+    valores anteriores
+    valores nuevos
+    fecha
+  }
+}
+
+' ============================================================
+' RELACIONES - Personas
+' ============================================================
+
+Usuario <|-- AnalistaComEx
+Usuario <|-- JefeDeAnalistas
+Usuario <|-- Administrador
+JefeDeAnalistas "1" o-- "0..*" AnalistaComEx : supervisa
+AnalistaComEx "1" --> "0..*" Embarque : registra
+Contenedor "0..*" --> "0..1" AnalistaComEx : asignado a
+Administrador ..> RegistroDeAuditoria : consulta
+
+' ============================================================
+' RELACIONES - Embarque y contenedor
+' ============================================================
+
+Embarque "1" o-- "1..*" Documento : contiene
+Embarque "1" o-- "0..*" Contenedor : agrupa
+Contenedor "0..*" --> "1" Naviera : pertenece a
+Contenedor "0..*" --> "1" Puerto : destino
+Contenedor "0..*" --> "0..1" Terminal : reporta estado
+Contenedor "0..*" --> "0..1" CondicionClimatica : afectado por
+Contenedor "1" o-- "0..*" Hito : trazabilidad
+Terminal "0..*" --> "1" Puerto : opera en
+
+' ============================================================
+' RELACIONES - Riesgo, alerta y comunicacion
+' ============================================================
+
+Contenedor "1" o-- "0..*" Alerta : genera
+Alerta "0..*" --> "1" NivelDeRiesgo : semaforo
+Alerta "0..*" --> "1" TipoDeMulta : advierte
+Alerta "1" o-- "0..*" Comunicacion : origina
+Comunicacion "0..*" --> "1" AgenteDeAduana : dirigida a
+Comunicacion "0..*" --> "0..1" Usuario : aprobada por
+RegistroDeAuditoria "0..*" --> "0..1" Usuario : responsable
+
+' ============================================================
+' REGLAS DEL NEGOCIO
+' ============================================================
+
+note bottom of NivelDeRiesgo
+  Semaforo de riesgo segun horas
+  hasta el deadline mas proximo:
+  OK > 96 h, WARNING 48-96 h,
+  CRITICAL < 48 h, OVERDUE vencido.
+end note
+
+note bottom of TipoDeMulta
+  DEMURRAGE: el contenedor lleno
+  permanece en el puerto mas dias
+  de los pactados (150-400 USD/dia).
+  DETENTION: se retiro el contenedor
+  pero se devuelve vacio tarde
+  (100-250 USD/dia).
+end note
+
+note bottom of Contenedor
+  deadline demurrage = arribo real + dias libres demurrage
+  deadline detention = fecha de retiro + dias libres detention
+  (solo si el contenedor ya fue retirado)
+  El puerto de destino del contenedor tiene precedencia
+  sobre el del embarque.
+end note
+
+note bottom of Documento
+  Cuatro verdades que hoy no conversan:
+  documental (BL), maritima (el barco),
+  portuaria (el terminal) y administrativa (Aduana).
+  El archivo nunca se persiste: solo la referencia, por
+  proteccion de datos personales. Confianza < 0.7 obliga
+  a revision humana; una huella repetida no se reprocesa.
+end note
+
+note bottom of AgenteDeAduana
+  Destinatario de las comunicaciones
+  (tambien llamado forwarder). Hoy se
+  guarda como texto en la comunicacion,
+  sin catalogo de contactos.
+end note
+
+note bottom of Comunicacion
+  Ninguna comunicacion externa se envia
+  sin aprobacion humana explicita: la
+  aprobacion queda registrada en la
+  comunicacion antes del envio.
+end note
+
+note bottom of Usuario
+  El analista ve solo sus contenedores;
+  el jefe de analistas supervisa en modo
+  lectura y no edita dias libres; el
+  administrador gestiona catalogos y
+  consulta la auditoria.
+end note
+
+note bottom of Terminal
+  STI (San Antonio), TPS (Valparaiso) y
+  DP World. Queda pendiente definir quien
+  asigna el terminal al contenedor.
+end note
+
+note bottom of CondicionClimatica
+  Marejadas y cierre de puerto
+  condicionan el retiro del contenedor.
+end note
+
+note bottom of Hito
+  Todo cambio relevante queda trazado
+  con su origen: usuario, IA o scraping.
+end note
+
+legend bottom
+  |= Vista |= Detalle |
+  | Alcance | Que hace el negocio: actuar antes de que la multa ocurra |
+  | Incluye | Personas, embarque y BL, contenedor, multas, riesgo, alertas y comunicacion |
+  | Fuera de alcance | Cliente web, Core, agentes IA, servicios e infraestructura |
+  | Composicion | o-- |
+  | Asociacion | --> |
+  | Herencia | <\|-- |
+  | Dependencia | ..> |
+endlegend
+
+@enduml

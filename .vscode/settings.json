@@ -1,0 +1,8 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/^python --version; node --version; git --version$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
+}
