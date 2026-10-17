@@ -30,6 +30,18 @@ services:
     ports:
       - "6379:6379"
 
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: portia-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   core:
     build: ./PortIA_Core
     container_name: portia-core
@@ -38,8 +50,10 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       ConnectionStrings__DefaultConnection: "Host=postgres;Port=5432;Database=portia_db;Username=portia;Password=portia123"
+      ConnectionStrings__RabbitMq: "amqp://guest:guest@rabbitmq:5672/"
     depends_on:
       - postgres
+      - rabbitmq
 
   agentes:
     build: ./PortIA_Agentes
@@ -48,8 +62,11 @@ services:
       - "8000:8000"
     environment:
       REDIS_HOST: redis
+      REDIS_URL: redis://redis:6379
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
       - redis
+      - rabbitmq
 
 volumes:
   postgres_data:
