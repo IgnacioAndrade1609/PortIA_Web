@@ -13,10 +13,10 @@
         (drop)="onDrop($event)"
       >
         <mat-icon>cloud_upload</mat-icon>
-        <p>Arrastra aquí el BL en PDF, o selecciona un archivo</p>
-        <input #fileInput type="file" accept="application/pdf" hidden (change)="onFileSelected($event)" />
+        <p>Arrastra aquí el documento en PDF, PNG o JPG, o selecciona un archivo</p>
+        <input #fileInput type="file" accept="application/pdf,image/png,image/jpeg" hidden (change)="onFileSelected($event)" />
         <button matButton="outlined" (click)="fileInput.click()">Seleccionar archivo</button>
-        <p class="pv-hint-text">Formato PDF, máximo 10 MB</p>
+        <p class="pv-hint-text">Formato PDF, PNG o JPG, máximo 10 MB</p>
       </div>
     }
 
