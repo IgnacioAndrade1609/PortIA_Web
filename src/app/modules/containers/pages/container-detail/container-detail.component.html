@@ -1,0 +1,126 @@
+<div class="pv-page">
+  @if (detalle(); as c) {
+    <div class="pv-title-row">
+      <button matIconButton matTooltip="Volver al listado" routerLink="/dashboard">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <h4 class="pv-page-title">{{ c.numeroContainer }}</h4>
+      <app-risk-badge [nivel]="c.nivelRiesgo" />
+    </div>
+
+    <div class="pv-box pv-section resumen-grid">
+      <div class="detail-col">
+        <div class="detail-label">Naviera</div>
+        <div class="detail-value">{{ c.naviera ?? '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Puerto destino</div>
+        <div class="detail-value">{{ c.puertoDestino ?? '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">N° BL</div>
+        <div class="detail-value">{{ c.numeroBl ?? '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Forwarder</div>
+        <div class="detail-value">{{ c.nombreForwarder ?? '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Terminal origen</div>
+        <div class="detail-value">{{ c.terminalOrigen ?? '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Terminal llegada</div>
+        <div class="detail-value">{{ c.terminalLlegada ?? '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Estado puerto</div>
+        <div class="detail-value">{{ c.estadoPuerto ?? '—' }}</div>
+      </div>
+      @if (c.documentoUrl) {
+        <div class="detail-col">
+          <div class="detail-label">Documento</div>
+          <a matButton="outlined" [href]="c.documentoUrl" target="_blank" rel="noopener">
+            <mat-icon>description</mat-icon>Ver documento
+          </a>
+        </div>
+      }
+    </div>
+
+    <div class="pv-box pv-section resumen-grid">
+      <div class="detail-col">
+        <div class="detail-label">ETA</div>
+        <div class="detail-value">{{ c.eta ? (c.eta | date: 'dd-MM-yyyy HH:mm') : '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Arribo real</div>
+        <div class="detail-value">{{ c.fechaArriboReal ? (c.fechaArriboReal | date: 'dd-MM-yyyy HH:mm') : '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Retiro contenedor</div>
+        <div class="detail-value">{{ c.fechaRetiroContainer ? (c.fechaRetiroContainer | date: 'dd-MM-yyyy HH:mm') : '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Deadline demurrage</div>
+        <div class="detail-value">{{ c.deadlineDemurrage ? (c.deadlineDemurrage | date: 'dd-MM-yyyy HH:mm') : '—' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Deadline detention</div>
+        <div class="detail-value">{{ c.deadlineDetention ? (c.deadlineDetention | date: 'dd-MM-yyyy HH:mm') : '—' }}</div>
+      </div>
+    </div>
+
+    <div class="pv-box pv-section">
+      <div class="pv-section-title">Días libres</div>
+
+      @if (!editando()) {
+        <div class="resumen-grid">
+          <div class="detail-col">
+            <div class="detail-label">Demurrage</div>
+            <div class="detail-value">{{ c.diasLibresDemurrage }} días</div>
+          </div>
+          <div class="detail-col">
+            <div class="detail-label">Detention</div>
+            <div class="detail-value">{{ c.diasLibresDetention }} días</div>
+          </div>
+        </div>
+        @if (puedeEditarDiasLibres()) {
+          <div class="pv-form-actions">
+            <button matButton="outlined" (click)="iniciarEdicion()">
+              <mat-icon>edit</mat-icon>Corregir días libres
+            </button>
+          </div>
+        }
+      } @else {
+        <div class="pv-form-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+            <mat-label>Días libres demurrage</mat-label>
+            <input matInput type="number" [ngModel]="diasDemurrageForm()" (ngModelChange)="diasDemurrageForm.set($event)" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+            <mat-label>Días libres detention</mat-label>
+            <input matInput type="number" [ngModel]="diasDetentionForm()" (ngModelChange)="diasDetentionForm.set($event)" />
+          </mat-form-field>
+        </div>
+        <div class="pv-form-actions">
+          <button matButton="filled" class="btn-primary" (click)="guardarDiasLibres()">Guardar</button>
+          <button matButton="outlined" (click)="cancelarEdicion()">Cancelar</button>
+        </div>
+      }
+    </div>
+
+    <div class="pv-box pv-section">
+      <div class="pv-section-title">Hitos</div>
+      <mat-nav-list>
+        @for (hito of c.hitos; track hito.id) {
+          <mat-list-item>
+            <span matListItemTitle>{{ hito.descripcion }}</span>
+            <span matListItemLine>{{ hito.origen }} · {{ hito.fechaOcurrencia | date: 'dd-MM-yyyy HH:mm' }}</span>
+          </mat-list-item>
+        }
+      </mat-nav-list>
+    </div>
+  } @else {
+    <p>No se encontró el contenedor solicitado.</p>
+  }
+</div>

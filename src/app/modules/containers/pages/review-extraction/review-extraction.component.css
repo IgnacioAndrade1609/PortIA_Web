@@ -1,0 +1,10 @@
+.review-intro {
+  margin-top: -12px;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}

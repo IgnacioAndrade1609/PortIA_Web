@@ -1,0 +1,45 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Auditoría completa</h4>
+  </div>
+  <p class="pv-section-subtitle" style="margin-top: -12px; margin-bottom: 16px;">Registro de todas las acciones del sistema (LOG_AUDITORIA).</p>
+
+  <table mat-table [dataSource]="logs()" class="pv-table-full mat-elevation-z1">
+    <ng-container matColumnDef="createAt">
+      <th mat-header-cell *matHeaderCellDef>Fecha</th>
+      <td mat-cell *matCellDef="let log">{{ log.createAt | date: 'dd-MM-yyyy HH:mm' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="nombreEntidad">
+      <th mat-header-cell *matHeaderCellDef>Entidad</th>
+      <td mat-cell *matCellDef="let log">{{ log.nombreEntidad }} #{{ log.idEntidad }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="accion">
+      <th mat-header-cell *matHeaderCellDef>Acción</th>
+      <td mat-cell *matCellDef="let log">{{ log.accion }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="responsable">
+      <th mat-header-cell *matHeaderCellDef>Responsable</th>
+      <td mat-cell *matCellDef="let log">{{ log.responsable ?? 'Sistema' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="valoresAnteriores">
+      <th mat-header-cell *matHeaderCellDef>Valor anterior</th>
+      <td mat-cell *matCellDef="let log">{{ log.valoresAnteriores ? (log.valoresAnteriores | json) : '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="valoresNuevos">
+      <th mat-header-cell *matHeaderCellDef>Valor nuevo</th>
+      <td mat-cell *matCellDef="let log">{{ log.valoresNuevos | json }}</td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">Sin registros</td>
+    </tr>
+  </table>
+</div>

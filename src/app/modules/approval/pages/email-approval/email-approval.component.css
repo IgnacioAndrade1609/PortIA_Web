@@ -1,0 +1,14 @@
+.approval-intro {
+  margin-top: -12px;
+}
+
+.approval-card {
+  max-width: 640px;
+}
+
+.approval-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}

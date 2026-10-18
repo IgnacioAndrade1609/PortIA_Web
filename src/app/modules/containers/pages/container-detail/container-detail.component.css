@@ -1,0 +1,21 @@
+.resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.detail-label {
+  font-size: var(--pv-font-size-base);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail-value {
+  font-size: var(--pv-font-size-md);
+  font-weight: 500;
+}
