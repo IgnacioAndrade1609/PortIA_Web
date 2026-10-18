@@ -1,6 +1,40 @@
 import { Hito } from './hito.model';
 import { NivelRiesgo } from './riesgo.model';
 
+export interface BackendContainer {
+  id: number;
+  containerNumber: string;
+  blNumber: string;
+  shippingLine: {
+    id: number;
+    name: string;
+  };
+  eta: string | null;
+  arrivalDate: string | null;
+  pickupDate: string | null;
+  demurrageFreeDays: number;
+  detentionFreeDays: number;
+  demurrageDeadline: string | null;
+  detentionDeadline: string | null;
+  riskLevel: NivelRiesgo | null;
+  hoursToDeadline: number;
+  needsReview: boolean;
+  managed: boolean;
+  portStatus: string | null;
+  assignedTo: {
+    id: number;
+    name: string;
+  };
+  originTerminal: {
+    id: number;
+    name: string;
+  } | null;
+  destinationTerminal: {
+    id: number;
+    name: string;
+  } | null;
+}
+
 export interface ContainerListItem {
   id: number;
   numeroContainer: string;
