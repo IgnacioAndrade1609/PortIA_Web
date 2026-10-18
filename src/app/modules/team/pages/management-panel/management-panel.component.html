@@ -1,0 +1,37 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Panel de gestión</h4>
+  </div>
+
+  <div class="pv-box pv-section resumen-grid">
+    <div class="detail-col">
+      <div class="detail-label">Contenedores del equipo</div>
+      <div class="detail-value">{{ totalEquipo() }}</div>
+    </div>
+    <div class="detail-col">
+      <div class="detail-label">En advertencia</div>
+      <div class="detail-value detail-value--warning">{{ totalWarning() }}</div>
+    </div>
+    <div class="detail-col">
+      <div class="detail-label">En estado crítico</div>
+      <div class="detail-value detail-value--error">{{ totalCritical() }}</div>
+    </div>
+    <div class="detail-col">
+      <div class="detail-label">Vencidos</div>
+      <div class="detail-value">{{ totalOverdue() }}</div>
+    </div>
+  </div>
+
+  <div class="pv-section-title">Carga de trabajo por analista</div>
+  <div class="pv-box workload-list">
+    @for (fila of cargaPorAnalista(); track fila.nombre) {
+      <div class="workload-row">
+        <span class="workload-name">{{ fila.nombre }}</span>
+        <div class="workload-bar-track">
+          <div class="workload-bar-fill" [style.width.%]="fila.porcentaje"></div>
+        </div>
+        <span class="workload-count">{{ fila.cantidad }}</span>
+      </div>
+    }
+  </div>
+</div>

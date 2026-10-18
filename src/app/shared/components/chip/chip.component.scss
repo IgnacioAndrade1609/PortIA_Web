@@ -1,0 +1,53 @@
+.pv-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 10px;
+  border-radius: var(--mat-sys-corner-small);
+  font-size: 0.8rem;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  background-color: var(--pv-chip-neutral-bg);
+  color: var(--pv-chip-neutral-fg);
+}
+
+.pv-chip--neutral {
+  background-color: var(--pv-chip-neutral-bg);
+  color: var(--pv-chip-neutral-fg);
+}
+
+.pv-chip--primary {
+  background-color: var(--pv-chip-primary-bg);
+  color: var(--pv-chip-primary-fg);
+}
+
+.pv-chip--secondary {
+  background-color: var(--pv-chip-secondary-bg);
+  color: var(--pv-chip-secondary-fg);
+}
+
+.pv-chip--success {
+  background-color: var(--pv-chip-success-bg);
+  color: var(--pv-chip-success-fg);
+}
+
+.pv-chip--danger {
+  background-color: var(--pv-chip-danger-bg);
+  color: var(--pv-chip-danger-fg);
+}
+
+.pv-chip--warning {
+  background-color: var(--pv-chip-warning-bg);
+  color: var(--pv-chip-warning-fg);
+}
+
+.pv-chip--info {
+  background-color: var(--pv-chip-info-bg);
+  color: var(--pv-chip-info-fg);
+}
+
+.pv-chip--purple {
+  background-color: var(--pv-chip-purple-bg);
+  color: var(--pv-chip-purple-fg);
+}

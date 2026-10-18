@@ -1,0 +1,66 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Dashboard de equipo</h4>
+  </div>
+
+  <div class="pv-actions-row">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
+      <mat-label>Ver por analista</mat-label>
+      <mat-select [value]="analistaSeleccionado()" (selectionChange)="analistaSeleccionado.set($event.value)">
+        <mat-option value="TODOS">Todo el equipo</mat-option>
+        @for (analista of analistas; track analista.id) {
+          <mat-option [value]="analista.nombreUsuario">{{ analista.nombreUsuario }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <span class="pv-spacer"></span>
+
+    <a matButton="outlined" routerLink="/equipo/gestion">
+      <mat-icon>bar_chart</mat-icon>Ver panel de gestión
+    </a>
+  </div>
+
+  <table mat-table [dataSource]="contenedores()" class="pv-table-full mat-elevation-z1">
+    <ng-container matColumnDef="numeroContainer">
+      <th mat-header-cell *matHeaderCellDef>N° Contenedor</th>
+      <td mat-cell *matCellDef="let c">{{ c.numeroContainer }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="asignadoA">
+      <th mat-header-cell *matHeaderCellDef>Analista</th>
+      <td mat-cell *matCellDef="let c">{{ c.asignadoA ?? '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="naviera">
+      <th mat-header-cell *matHeaderCellDef>Naviera</th>
+      <td mat-cell *matCellDef="let c">{{ c.naviera ?? '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="eta">
+      <th mat-header-cell *matHeaderCellDef>ETA</th>
+      <td mat-cell *matCellDef="let c">{{ c.eta ? (c.eta | date: 'dd-MM-yyyy') : '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="nivelRiesgo">
+      <th mat-header-cell *matHeaderCellDef>Riesgo</th>
+      <td mat-cell *matCellDef="let c"><app-risk-badge [nivel]="c.nivelRiesgo" /></td>
+    </ng-container>
+
+    <ng-container matColumnDef="acciones">
+      <th mat-header-cell *matHeaderCellDef></th>
+      <td mat-cell *matCellDef="let c">
+        <a matIconButton class="btn-icon-primary" [routerLink]="['/contenedores', c.id]" matTooltip="Ver detalle">
+          <mat-icon>visibility</mat-icon>
+        </a>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">Este analista no tiene contenedores asignados.</td>
+    </tr>
+  </table>
+</div>

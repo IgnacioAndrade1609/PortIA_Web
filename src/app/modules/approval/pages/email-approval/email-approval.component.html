@@ -1,0 +1,45 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Aprobación de correo</h4>
+  </div>
+  <p class="pv-section-subtitle approval-intro">Borradores generados por IA. Nada se envía sin aprobación humana.</p>
+
+  @if (borradores().length === 0) {
+    <p class="pv-hint-text">No hay borradores pendientes.</p>
+  }
+
+  @for (borrador of borradores(); track borrador.idAlerta) {
+    <div class="pv-box pv-section approval-card">
+      <div class="approval-header">
+        <span class="pv-section-title">{{ borrador.numeroContainer }}</span>
+        <app-chip [color]="colorEstado(borrador.estado)">{{ borrador.estado }}</app-chip>
+      </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
+        <mat-label>Destinatario</mat-label>
+        <input matInput [value]="borrador.destinatario" disabled />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
+        <mat-label>Asunto</mat-label>
+        <input matInput [ngModel]="borrador.asunto"
+               [disabled]="borrador.estado !== 'PENDIENTE_APROBACION'"
+               (ngModelChange)="actualizar(borrador.idAlerta, $event, borrador.contenido)" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
+        <mat-label>Contenido</mat-label>
+        <textarea matInput rows="8" [ngModel]="borrador.contenido"
+                  [disabled]="borrador.estado !== 'PENDIENTE_APROBACION'"
+                  (ngModelChange)="actualizar(borrador.idAlerta, borrador.asunto, $event)"></textarea>
+      </mat-form-field>
+
+      @if (borrador.estado === 'PENDIENTE_APROBACION') {
+        <div class="pv-form-actions">
+          <button matButton="outlined" (click)="rechazar(borrador.idAlerta)">Rechazar</button>
+          <button matButton="filled" class="btn-primary" (click)="aprobar(borrador.idAlerta)">Aprobar y enviar</button>
+        </div>
+      }
+    </div>
+  }
+</div>

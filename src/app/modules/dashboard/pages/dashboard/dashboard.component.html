@@ -1,0 +1,102 @@
+<div class="pv-page">
+
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Mis contenedores</h4>
+  </div>
+
+  <div class="pv-section">
+    <form (ngSubmit)="buscar()">
+      <div class="pv-form-row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>N° Contenedor</mat-label>
+          <input matInput [value]="draftBusqueda()" (input)="draftBusqueda.set($any($event.target).value)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Riesgo</mat-label>
+          <mat-select [value]="draftRiesgo()" (selectionChange)="draftRiesgo.set($event.value)">
+            <mat-option value="TODOS">Todos</mat-option>
+            <mat-option value="OK">OK</mat-option>
+            <mat-option value="WARNING">Advertencia</mat-option>
+            <mat-option value="CRITICAL">Crítico</mat-option>
+            <mat-option value="OVERDUE">Vencido</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Naviera</mat-label>
+          <mat-select [value]="draftNaviera()" (selectionChange)="draftNaviera.set($event.value)">
+            <mat-option value="TODAS">Todas</mat-option>
+            @for (naviera of navieras(); track naviera) {
+              <mat-option [value]="naviera">{{ naviera }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <div class="pv-col-3 filter-actions">
+          <button type="button" matIconButton class="btn-icon-dark" matTooltip="Limpiar" (click)="limpiar()">
+            <mat-icon>filter_alt_off</mat-icon>
+          </button>
+          <button type="submit" matIconButton class="btn-icon-primary" matTooltip="Buscar">
+            <mat-icon>search</mat-icon>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="pv-actions-row">
+    <div class="pv-btn-group">
+      <button matButton="filled" class="btn-secondary" [disabled]="idSeleccionado() === null" (click)="verDetalle()">
+        <mat-icon>visibility</mat-icon>Ver Detalle
+      </button>
+    </div>
+    <span class="pv-spacer"></span>
+    <div class="pv-btn-group">
+      <button matButton="outlined" (click)="exportar()">
+        <mat-icon>file_download</mat-icon>Exportar a Excel
+      </button>
+      <a matButton="filled" class="btn-primary" routerLink="/contenedores/carga">
+        <mat-icon>upload_file</mat-icon>Cargar documento
+      </a>
+    </div>
+  </div>
+
+  <table mat-table [dataSource]="filtrados()" class="pv-table-full mat-elevation-z1">
+    <ng-container matColumnDef="numeroContainer">
+      <th mat-header-cell *matHeaderCellDef>N° Contenedor</th>
+      <td mat-cell *matCellDef="let c">{{ c.numeroContainer }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="naviera">
+      <th mat-header-cell *matHeaderCellDef>Naviera</th>
+      <td mat-cell *matCellDef="let c">{{ c.naviera ?? '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="puertoDestino">
+      <th mat-header-cell *matHeaderCellDef>Puerto destino</th>
+      <td mat-cell *matCellDef="let c">{{ c.puertoDestino ?? '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="eta">
+      <th mat-header-cell *matHeaderCellDef>ETA</th>
+      <td mat-cell *matCellDef="let c">{{ c.eta ? (c.eta | date: 'dd-MM-yyyy') : '—' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="nivelRiesgo">
+      <th mat-header-cell *matHeaderCellDef>Riesgo</th>
+      <td mat-cell *matCellDef="let c"><app-risk-badge [nivel]="c.nivelRiesgo" /></td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas"
+        [class.selected-row]="idSeleccionado() === row.id"
+        (click)="toggleSeleccion(row.id)"
+        (dblclick)="irADetalle(row.id)"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">Sin registros</td>
+    </tr>
+  </table>
+
+</div>

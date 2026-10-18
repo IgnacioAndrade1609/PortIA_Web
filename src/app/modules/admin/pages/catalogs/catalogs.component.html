@@ -1,0 +1,79 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Navieras y terminales</h4>
+  </div>
+
+  <mat-tab-group>
+    <mat-tab label="Navieras">
+      <div class="pv-actions-row" style="margin-top: 16px;">
+        <span class="pv-spacer"></span>
+        <button matButton="filled" class="btn-primary" (click)="mostrandoFormNaviera.set(!mostrandoFormNaviera())">
+          <mat-icon>{{ mostrandoFormNaviera() ? 'close' : 'add' }}</mat-icon>
+          {{ mostrandoFormNaviera() ? 'Cancelar' : 'Nueva naviera' }}
+        </button>
+      </div>
+
+      @if (mostrandoFormNaviera()) {
+        <form [formGroup]="formNaviera" (ngSubmit)="crearNaviera()" class="pv-box pv-section">
+          <div class="pv-form-row">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombreNaviera" />
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>Código</mat-label>
+              <input matInput formControlName="codigoNaviera" />
+            </mat-form-field>
+          </div>
+          <div class="pv-form-actions">
+            <button matButton="filled" class="btn-primary" type="submit">Crear</button>
+          </div>
+        </form>
+      }
+
+      <table mat-table [dataSource]="navieras()" class="pv-table-full mat-elevation-z1">
+        <ng-container matColumnDef="nombreNaviera">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let n">{{ n.nombreNaviera }}</td>
+        </ng-container>
+        <ng-container matColumnDef="codigoNaviera">
+          <th mat-header-cell *matHeaderCellDef>Código</th>
+          <td mat-cell *matCellDef="let n">{{ n.codigoNaviera }}</td>
+        </ng-container>
+        <ng-container matColumnDef="vigente">
+          <th mat-header-cell *matHeaderCellDef>Vigente</th>
+          <td mat-cell *matCellDef="let n">
+            <mat-slide-toggle [checked]="n.vigente" (change)="alternarVigenciaNaviera(n.id)" />
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columnasNaviera"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnasNaviera"></tr>
+      </table>
+    </mat-tab>
+
+    <mat-tab label="Terminales">
+      <table mat-table [dataSource]="terminales()" class="pv-table-full mat-elevation-z1" style="margin-top: 16px;">
+        <ng-container matColumnDef="codigoTerminal">
+          <th mat-header-cell *matHeaderCellDef>Código</th>
+          <td mat-cell *matCellDef="let t">{{ t.codigoTerminal }}</td>
+        </ng-container>
+        <ng-container matColumnDef="nombreTerminal">
+          <th mat-header-cell *matHeaderCellDef>Nombre</th>
+          <td mat-cell *matCellDef="let t">{{ t.nombreTerminal }}</td>
+        </ng-container>
+        <ng-container matColumnDef="pais">
+          <th mat-header-cell *matHeaderCellDef>País</th>
+          <td mat-cell *matCellDef="let t">{{ t.pais ?? '—' }}</td>
+        </ng-container>
+        <ng-container matColumnDef="vigente">
+          <th mat-header-cell *matHeaderCellDef>Vigente</th>
+          <td mat-cell *matCellDef="let t">
+            <mat-slide-toggle [checked]="t.vigente" (change)="alternarVigenciaTerminal(t.id)" />
+          </td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="columnasTerminal"></tr>
+        <tr mat-row *matRowDef="let row; columns: columnasTerminal"></tr>
+      </table>
+    </mat-tab>
+  </mat-tab-group>
+</div>

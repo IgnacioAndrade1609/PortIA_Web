@@ -1,0 +1,66 @@
+.resumen-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.detail-col {
+  display: flex;
+  flex-direction: column;
+  gap: .25rem;
+}
+
+.detail-label {
+  font-size: var(--pv-font-size-base);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.detail-value {
+  font-size: var(--pv-font-size-xl);
+  font-weight: 500;
+}
+
+.detail-value--warning {
+  color: var(--pv-chip-warning-fg);
+}
+
+.detail-value--error {
+  color: var(--pv-chip-danger-fg);
+}
+
+.workload-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 560px;
+}
+
+.workload-row {
+  display: grid;
+  grid-template-columns: 150px 1fr 32px;
+  align-items: center;
+  gap: 12px;
+}
+
+.workload-name {
+  font-size: var(--pv-font-size-base);
+}
+
+.workload-bar-track {
+  background-color: var(--mat-sys-surface-container);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.workload-bar-fill {
+  background-color: var(--brand-primary);
+  height: 100%;
+  border-radius: 999px;
+}
+
+.workload-count {
+  font-size: var(--pv-font-size-base);
+  text-align: right;
+  color: var(--mat-sys-on-surface-variant);
+}

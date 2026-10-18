@@ -1,0 +1,37 @@
+<nav class="navbar">
+  <div class="navbar-left">
+    <span class="navbar-brand">PortIA</span>
+
+    <ul class="local-menu">
+      @for (item of navItems(); track item.path) {
+        <li>
+          <a [routerLink]="item.path" routerLinkActive="nav-active">
+            <mat-icon inline>{{ item.icon }}</mat-icon>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </div>
+
+  <div class="navbar-right">
+    <span class="navbar-role">{{ rol() }} · {{ usuario()?.nombreUsuario }}</span>
+
+    <button
+      matIconButton
+      class="theme-toggle-btn"
+      (click)="alternarTema()"
+      [title]="tema() === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro'"
+      aria-label="Alternar tema">
+      <mat-icon>{{ tema() === 'dark' ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
+
+    <button matIconButton class="theme-toggle-btn" (click)="logout()" title="Cerrar sesión" aria-label="Cerrar sesión">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </div>
+</nav>
+
+<main class="main-content">
+  <router-outlet />
+</main>
