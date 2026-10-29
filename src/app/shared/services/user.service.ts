@@ -1,29 +1,30 @@
-import { Injectable, signal } from '@angular/core';
-import { Usuario } from '../models/usuario.model';
-import { MOCK_CREDENTIALS } from '../mocks/usuarios.mock';
-
-export interface UsuarioAdmin extends Usuario {
-  vigente: boolean;
-}
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { CreateUserRequest, PagedResult, RoleDto, UserDto } from '../models/usuario.model';
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
-  private readonly usuariosSignal = signal<UsuarioAdmin[]>(
-    MOCK_CREDENTIALS.map(c => ({ ...c.usuario, vigente: true }))
-  );
+  private readonly http = inject(HttpClient);
+  private readonly usersUrl = `${environment.apiUrl}/users`;
+  private readonly rolesUrl = `${environment.apiUrl}/roles`;
 
-  readonly usuarios = this.usuariosSignal.asReadonly();
-
-  crear(nombreUsuario: string, email: string, rol: Usuario['rol']): void {
-    this.usuariosSignal.update(lista => [
-      ...lista,
-      { id: Math.max(0, ...lista.map(u => u.id)) + 1, nombreUsuario, email, rol, vigente: true }
-    ]);
+  getUsers(): Observable<PagedResult<UserDto>> {
+    return this.http.get<PagedResult<UserDto>>(this.usersUrl, {
+      params: { page: 1, pageSize: 100 }
+    });
   }
 
-  alternarVigencia(id: number): void {
-    this.usuariosSignal.update(lista =>
-      lista.map(u => (u.id === id ? { ...u, vigente: !u.vigente } : u))
-    );
+  getRoles(): Observable<RoleDto[]> {
+    return this.http.get<RoleDto[]>(this.rolesUrl);
+  }
+
+  create(request: CreateUserRequest): Observable<UserDto> {
+    return this.http.post<UserDto>(this.usersUrl, request);
+  }
+
+  updateStatus(id: number, active: boolean): Observable<UserDto> {
+    return this.http.patch<UserDto>(`${this.usersUrl}/${id}/status`, { active });
   }
 }

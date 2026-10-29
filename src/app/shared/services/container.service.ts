@@ -1,13 +1,14 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { tap } from 'rxjs/operators';
+import { environment } from '../../../environments/environment';
 import { BackendContainer, ContainerDetail, ContainerListItem } from '../models/container.model';
 import { MOCK_CONTAINER_DETAIL } from '../mocks/containers.mock';
 
 @Injectable({ providedIn: 'root' })
 export class ContainerService {
   private readonly http = inject(HttpClient);
-  private readonly apiUrl = 'http://localhost:5146/api/v1/containers';
+  private readonly apiUrl = `${environment.apiUrl}/containers`;
 
   private readonly listaSignal = signal<ContainerListItem[]>([]);
   private readonly detalleSignal = signal<Record<number, ContainerDetail>>(MOCK_CONTAINER_DETAIL);

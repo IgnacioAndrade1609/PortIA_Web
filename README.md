@@ -18,8 +18,8 @@
 
 | Integrante | Rol principal |
 |---|---|
-| **Ignacio Andrade** | Arquitectura de software y Core (.NET 10 / N-Capas) |
-| **Nicolas Soto** | Frontend Web (Angular) |
+| **Ignacio Andrade** | Arquitectura de software, Core (.NET 10 / N-Capas), Frontend Web (Angular) e Inspector |
+| **Nicolas Soto** | Frontend Web (Angular) y Core (.NET 10 / N-Capas) |
 | **Airon Saez** | Agentes de Inteligencia Artificial (Python / FastAPI) |
 
 Profesor guía: Felipe Antonio Krauss Benavente.
@@ -146,10 +146,10 @@ CAPSTONE/
 
 ### 2. Levantar todo el backend con Docker
 
-El archivo `docker-compose.yml` vive en este mismo repositorio (`PortIA_Web`). Cópialo a la carpeta raíz `CAPSTONE/` (un nivel arriba de los 3 repos) y ejecuta, desde ahí:
+El archivo `docker-compose.yml` vive en este mismo repositorio (`PortIA_Web`). Desde la carpeta raíz `CAPSTONE/` (un nivel arriba de los 3 repos), ejecuta:
 
 ```bash
-docker-compose up --build
+docker compose -f PortIA_Web/docker-compose.yml --project-directory . up -d --build
 ```
 
 Esto levanta 5 contenedores:
