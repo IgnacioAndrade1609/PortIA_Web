@@ -44,30 +44,77 @@
     </form>
   }
 
-  <table mat-table [dataSource]="usuarios()" class="pv-table-full mat-elevation-z1">
-    <ng-container matColumnDef="nombreUsuario">
-      <th mat-header-cell *matHeaderCellDef>Nombre</th>
-      <td mat-cell *matCellDef="let u">{{ u.name }}</td>
-    </ng-container>
+  <div class="pv-table-container">
+    <table mat-table [dataSource]="usuarios()" class="pv-table-full mat-elevation-z1">
+      
+      <!-- Columna Nombre -->
+      <ng-container matColumnDef="nombreUsuario">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let u">
+          @if (editandoDatosId() === u.id) {
+            <div [formGroup]="editDatosForm" class="pv-inline-edit">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="name" placeholder="Nombre" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="email" placeholder="Correo" />
+              </mat-form-field>
+              <button mat-icon-button color="primary" (click)="guardarDatos(u.id)"><mat-icon>check</mat-icon></button>
+              <button mat-icon-button (click)="cancelarEdicionDatos()"><mat-icon>close</mat-icon></button>
+            </div>
+          } @else {
+            {{ u.name }}
+          }
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="email">
-      <th mat-header-cell *matHeaderCellDef>Correo</th>
-      <td mat-cell *matCellDef="let u">{{ u.email }}</td>
-    </ng-container>
+      <!-- Columna Correo -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Correo</th>
+        <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="rol">
-      <th mat-header-cell *matHeaderCellDef>Rol</th>
-      <td mat-cell *matCellDef="let u">{{ u.role.name }}</td>
-    </ng-container>
+      <!-- Columna Rol -->
+      <ng-container matColumnDef="rol">
+        <th mat-header-cell *matHeaderCellDef>Rol</th>
+        <td mat-cell *matCellDef="let u">
+          @if (editandoRolId() === u.id) {
+            <div [formGroup]="editRolForm" class="pv-inline-edit">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="roleId">
+                  @for (rol of roles(); track rol.id) {
+                    <mat-option [value]="rol.id">{{ rol.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button mat-icon-button color="primary" (click)="guardarRol(u.id)"><mat-icon>check</mat-icon></button>
+              <button mat-icon-button (click)="cancelarEdicionRol()"><mat-icon>close</mat-icon></button>
+            </div>
+          } @else {
+            {{ u.role.name }}
+          }
+        </td>
+      </ng-container>
 
-    <ng-container matColumnDef="vigente">
-      <th mat-header-cell *matHeaderCellDef>Activo</th>
-      <td mat-cell *matCellDef="let u">
-        <mat-slide-toggle [checked]="u.active" (change)="alternarVigencia(u)" />
-      </td>
-    </ng-container>
+      <!-- Columna Activo -->
+      <ng-container matColumnDef="vigente">
+        <th mat-header-cell *matHeaderCellDef>Activo</th>
+        <td mat-cell *matCellDef="let u">
+          <mat-slide-toggle [checked]="u.active" (change)="alternarVigencia(u)" />
+        </td>
+      </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-    <tr mat-row *matRowDef="let row; columns: columnas"></tr>
-  </table>
+      <!-- Columna Acciones -->
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let u" class="pv-actions-cell">
+          <button mat-stroked-button color="primary" (click)="iniciarEdicionDatos(u)">Modificar datos</button>
+          <button mat-stroked-button color="accent" (click)="iniciarEdicionRol(u)">Modificar rol</button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+    </table>
+  </div>
 </div>

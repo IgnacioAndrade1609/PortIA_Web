@@ -32,17 +32,30 @@ export class UsersComponent implements OnInit {
 
   readonly usuarios = signal<UserDto[]>([]);
   readonly roles = signal<RoleDto[]>([]);
-  readonly columnas = ['nombreUsuario', 'email', 'rol', 'vigente'];
+  readonly columnas = ['nombreUsuario', 'email', 'rol', 'vigente', 'acciones'];
 
   readonly mostrandoFormulario = signal(false);
   readonly guardando = signal(false);
   readonly error = signal<string | null>(null);
+
+  readonly editandoDatosId = signal<number | null>(null);
+  readonly editandoRolId = signal<number | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     nombreUsuario: ['', Validators.required],
     email: ['', [Validators.required, Validators.email]],
     password: ['', [Validators.required, Validators.minLength(6)]],
     rolId: this.fb.control<number | null>(null, Validators.required)
+  });
+
+  readonly editDatosForm = this.fb.nonNullable.group({
+    name: ['', Validators.required],
+    email: ['', [Validators.required, Validators.email]]
+  });
+
+  // Usamos 'roleId' para que coincida exactamente con el backend
+  readonly editRolForm = this.fb.nonNullable.group({
+    roleId: this.fb.control<number | null>(null, Validators.required)
   });
 
   ngOnInit(): void {
@@ -71,6 +84,69 @@ export class UsersComponent implements OnInit {
         this.guardando.set(false);
         this.error.set(err.status === 409 ? 'Ya existe un usuario con ese correo.' : 'No se pudo crear el usuario.');
       }
+    });
+  }
+
+  iniciarEdicionDatos(usuario: UserDto): void {
+    this.editandoRolId.set(null);
+    this.editandoDatosId.set(usuario.id);
+    this.editDatosForm.setValue({
+      name: usuario.name,
+      email: usuario.email
+    });
+  }
+
+  cancelarEdicionDatos(): void {
+    this.editandoDatosId.set(null);
+    this.editDatosForm.reset();
+  }
+
+  guardarDatos(id: number): void {
+    if (this.editDatosForm.invalid) {
+      this.editDatosForm.markAllAsTouched();
+      return;
+    }
+
+    this.error.set(null);
+    const requestData = this.editDatosForm.getRawValue();
+
+    this.userService.update(id, requestData).subscribe({
+      next: () => {
+        this.editandoDatosId.set(null);
+        this.cargarUsuarios();
+      },
+      error: () => this.error.set('No se pudieron actualizar los datos del usuario.')
+    });
+  }
+
+  iniciarEdicionRol(usuario: UserDto): void {
+    this.editandoDatosId.set(null);
+    this.editandoRolId.set(usuario.id);
+    this.editRolForm.setValue({
+      roleId: usuario.role.id
+    });
+  }
+
+  cancelarEdicionRol(): void {
+    this.editandoRolId.set(null);
+    this.editRolForm.reset();
+  }
+
+  guardarRol(id: number): void {
+    if (this.editRolForm.invalid) {
+      this.editRolForm.markAllAsTouched();
+      return;
+    }
+
+    this.error.set(null);
+    const { roleId } = this.editRolForm.getRawValue();
+
+    this.userService.updateRole(id, roleId!).subscribe({
+      next: () => {
+        this.editandoRolId.set(null);
+        this.cargarUsuarios();
+      },
+      error: () => this.error.set('No se pudo actualizar el rol del usuario.')
     });
   }
 
