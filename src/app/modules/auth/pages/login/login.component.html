@@ -32,16 +32,13 @@
         <p class="login-error">{{ error() }}</p>
       }
 
-      <button matButton="filled" class="btn-primary login-submit" type="submit">Ingresar</button>
+      <button matButton="filled" class="btn-primary login-submit" type="submit" [disabled]="cargando()">
+        @if (cargando()) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          Ingresar
+        }
+      </button>
     </form>
-
-    <div class="login-hint">
-      <p>Usuarios de prueba (contraseña <code>portia123</code>):</p>
-      <ul>
-        <li>analista&#64;portia.cl</li>
-        <li>jefe&#64;portia.cl</li>
-        <li>admin&#64;portia.cl</li>
-      </ul>
-    </div>
   </mat-card>
 </div>
