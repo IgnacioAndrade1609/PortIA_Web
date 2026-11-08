@@ -22,13 +22,6 @@ export const routes: Routes = [
         data: { breadcrumb: 'Mis contenedores' }
       },
       {
-        path: 'contenedores/carga',
-        canActivate: [roleGuard(['Analista'])],
-        loadComponent: () =>
-          import('./modules/containers/pages/upload/upload.component').then(m => m.UploadComponent),
-        data: { breadcrumb: 'Cargar documento' }
-      },
-      {
         path: 'contenedores/revision',
         canActivate: [roleGuard(['Analista'])],
         loadComponent: () =>

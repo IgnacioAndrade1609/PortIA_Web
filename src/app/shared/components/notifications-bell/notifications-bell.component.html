@@ -1,0 +1,41 @@
+<button
+  matIconButton
+  class="theme-toggle-btn"
+  [matMenuTriggerFor]="panel"
+  [matBadge]="noLeidas() > 0 ? noLeidas() : null"
+  matBadgeColor="warn"
+  matBadgeSize="small"
+  title="Notificaciones"
+  aria-label="Notificaciones">
+  <mat-icon>notifications</mat-icon>
+</button>
+
+<mat-menu #panel="matMenu" class="notifications-panel">
+  <div class="notifications-header" (click)="$event.stopPropagation()">
+    <span>Notificaciones</span>
+  </div>
+
+  @if (visibles().length === 0) {
+    <div class="notifications-empty" (click)="$event.stopPropagation()">Sin alertas por ahora.</div>
+  } @else {
+    @for (alerta of visibles(); track alerta.id) {
+      <button mat-menu-item class="notification-item" [class.no-leida]="!alerta.leida" (click)="irAlContenedor(alerta.containerId)">
+        <div class="notification-row">
+          <app-risk-badge [nivel]="alerta.nivelRiesgo" />
+          <div class="notification-texto">
+            <span class="notification-contenedor">{{ alerta.numeroContainer }}</span>
+            <span class="notification-mensaje">{{ alerta.mensaje }}</span>
+            <span class="notification-fecha">{{ alerta.createAt | date: 'dd-MM-yyyy HH:mm' }}</span>
+          </div>
+          @if (!alerta.leida) {
+            <button matIconButton matTooltip="Marcar como leída" (click)="marcarLeida($event, alerta.id)">
+              <mat-icon>mark_email_read</mat-icon>
+            </button>
+          }
+        </div>
+      </button>
+    }
+  }
+
+  <a mat-menu-item routerLink="/alertas" class="notifications-footer">Ver todas las alertas</a>
+</mat-menu>

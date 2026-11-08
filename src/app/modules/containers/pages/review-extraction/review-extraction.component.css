@@ -8,3 +8,13 @@
   gap: 12px;
   margin-bottom: 12px;
 }
+
+.review-error {
+  color: var(--mat-sys-error);
+  margin: 0 0 12px;
+}
+
+.review-field-error .mat-mdc-text-field-wrapper {
+  outline: 2px solid var(--mat-sys-error);
+  border-radius: 4px;
+}

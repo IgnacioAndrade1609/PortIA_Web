@@ -4,6 +4,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
+import { NotificationsBellComponent } from '../../shared/components/notifications-bell/notifications-bell.component';
 
 interface NavItem {
   path: string;
@@ -14,7 +15,7 @@ interface NavItem {
 @Component({
   selector: 'app-shell',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, MatIconModule, MatButtonModule, NotificationsBellComponent],
   templateUrl: './shell.component.html'
 })
 export class ShellComponent {
@@ -31,7 +32,6 @@ export class ShellComponent {
       case 'Analista':
         return [
           { path: '/dashboard', label: 'Mis contenedores', icon: 'dashboard' },
-          { path: '/contenedores/carga', label: 'Cargar documento', icon: 'upload_file' },
           { path: '/contenedores/revision', label: 'Revisión', icon: 'fact_check' },
           { path: '/alertas', label: 'Alertas', icon: 'notifications' },
           { path: '/aprobacion-correo', label: 'Aprobación de correo', icon: 'mail' },

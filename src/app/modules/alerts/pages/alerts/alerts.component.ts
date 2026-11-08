@@ -27,13 +27,7 @@ export class AlertsComponent {
       : ['numeroContainer', 'tipoAlerta', 'nivelRiesgo', 'mensaje', 'createAt', 'analistaAsignado']
   );
 
-  readonly alertas = computed(() => {
-    const todas = this.alertService.alertas();
-    if (!this.esAnalista()) return todas;
-
-    const nombre = this.auth.usuario()?.nombreUsuario;
-    return todas.filter(a => a.analistaAsignado === nombre);
-  });
+  readonly alertas = this.alertService.alertas;
 
   marcarLeida(id: number): void {
     this.alertService.marcarLeida(id);

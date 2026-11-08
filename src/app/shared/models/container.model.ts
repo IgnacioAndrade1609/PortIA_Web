@@ -5,6 +5,7 @@ export interface BackendContainer {
   id: number;
   containerNumber: string;
   blNumber: string;
+  forwarderName: string | null;
   shippingLine: {
     id: number;
     name: string;
@@ -21,6 +22,7 @@ export interface BackendContainer {
   needsReview: boolean;
   managed: boolean;
   portStatus: string | null;
+  estado: string | null;
   assignedTo: {
     id: number;
     name: string;

@@ -19,3 +19,15 @@
   font-size: var(--pv-font-size-md);
   font-weight: 500;
 }
+
+.detail-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 48px 0;
+}
+
+.detail-error {
+  color: var(--mat-sys-error);
+}

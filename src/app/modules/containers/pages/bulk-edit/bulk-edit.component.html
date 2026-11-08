@@ -1,0 +1,59 @@
+<h2 matDialogTitle>Editar contenedores en masa</h2>
+
+<mat-dialog-content>
+  @if (estado() === 'IDLE') {
+    <p class="pv-hint-text">
+      1. Descarga la plantilla con tus contenedores actuales.<br />
+      2. Edita solo las celdas que quieras cambiar: naviera, terminales, N° BL, forwarder, llegada estimada, días libres, fecha de arribo real, retirado, devuelto vacío.
+      Las columnas marcadas "NO EDITAR" son solo de referencia (riesgo, deadlines, estado de puerto) — el sistema las calcula solo.<br />
+      3. Vuelve a subir el archivo — solo se aplican los campos que realmente cambiaron.
+    </p>
+
+    <div class="pv-btn-group">
+      <button matButton="outlined" (click)="descargarPlantilla()">
+        <mat-icon>file_download</mat-icon>Descargar plantilla
+      </button>
+      <input #fileInput type="file" accept=".xlsx,.xls" hidden (change)="onFileSelected($event)" />
+      <button matButton="filled" class="btn-primary" (click)="fileInput.click()">
+        <mat-icon>upload_file</mat-icon>Subir plantilla editada
+      </button>
+    </div>
+  }
+
+  @if (error()) {
+    <p class="upload-error">{{ error() }}</p>
+  }
+
+  @if (estado() === 'PROCESANDO') {
+    <div class="upload-progress">
+      <p>Aplicando cambios…</p>
+      <mat-progress-bar mode="determinate" [value]="progreso()" />
+    </div>
+  }
+
+  @if (estado() === 'COMPLETO') {
+    <table class="bulk-edit-results">
+      @for (fila of resultados(); track fila.numeroContainer) {
+        <tr>
+          <td class="bulk-edit-container">{{ fila.numeroContainer }}</td>
+          <td>
+            @for (campo of fila.campos; track campo.campo) {
+              <div [class]="'status-' + campo.estado.toLowerCase()">
+                {{ campo.campo }}: {{ campo.estado }}@if (campo.detalle) { — {{ campo.detalle }} }
+              </div>
+            }
+          </td>
+        </tr>
+      }
+    </table>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (estado() === 'COMPLETO') {
+    <button matButton="outlined" (click)="reiniciar()">Subir otro archivo</button>
+    <button matButton="filled" class="btn-primary" (click)="cerrar()">Cerrar</button>
+  } @else {
+    <button matButton="outlined" (click)="cerrar()">Cancelar</button>
+  }
+</mat-dialog-actions>

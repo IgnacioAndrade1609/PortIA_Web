@@ -1,9 +1,9 @@
 import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { tap } from 'rxjs/operators';
+import { forkJoin, map, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { BackendContainer, ContainerDetail, ContainerListItem } from '../models/container.model';
-import { MOCK_CONTAINER_DETAIL } from '../mocks/containers.mock';
+import { Hito } from '../models/hito.model';
 
 @Injectable({ providedIn: 'root' })
 export class ContainerService {
@@ -11,7 +11,6 @@ export class ContainerService {
   private readonly apiUrl = `${environment.apiUrl}/containers`;
 
   private readonly listaSignal = signal<ContainerListItem[]>([]);
-  private readonly detalleSignal = signal<Record<number, ContainerDetail>>(MOCK_CONTAINER_DETAIL);
 
   readonly lista = this.listaSignal.asReadonly();
 
@@ -41,16 +40,69 @@ export class ContainerService {
     });
   }
 
-  getById(id: number): ContainerDetail | undefined {
-    return this.detalleSignal()[id];
+  listarCompleto(): Observable<BackendContainer[]> {
+    return this.http.get<BackendContainer[]>(this.apiUrl);
   }
 
-  updateFreeDays(id: number, diasLibresDemurrage: number, diasLibresDetention: number): ContainerDetail | undefined {
-    const actual = this.detalleSignal()[id];
-    if (!actual) return undefined;
+  getDetalle(id: number): Observable<ContainerDetail | undefined> {
+    return forkJoin({
+      contenedores: this.http.get<BackendContainer[]>(this.apiUrl),
+      hitos: this.http.get<Hito[]>(`${this.apiUrl}/${id}/hitos`)
+    }).pipe(
+      map(({ contenedores, hitos }) => {
+        const c = contenedores.find(item => item.id === id);
+        if (!c) return undefined;
 
-    const actualizado: ContainerDetail = { ...actual, diasLibresDemurrage, diasLibresDetention };
-    this.detalleSignal.update(detalles => ({ ...detalles, [id]: actualizado }));
-    return actualizado;
+        const detalle: ContainerDetail = {
+          id: c.id,
+          numeroContainer: c.containerNumber,
+          naviera: c.shippingLine?.name && c.shippingLine.name !== 'N/A' ? c.shippingLine.name : null,
+          puertoDestino: c.destinationTerminal?.name ?? null,
+          numeroBl: c.blNumber,
+          nombreForwarder: c.forwarderName,
+          terminalOrigen: c.originTerminal?.name ?? null,
+          terminalLlegada: c.destinationTerminal?.name ?? null,
+          eta: c.eta,
+          diasLibresDemurrage: c.demurrageFreeDays,
+          diasLibresDetention: c.detentionFreeDays,
+          fechaArriboReal: c.arrivalDate,
+          fechaRetiroContainer: c.pickupDate,
+          estadoPuerto: c.portStatus,
+          deadlineDemurrage: c.demurrageDeadline,
+          deadlineDetention: c.detentionDeadline,
+          nivelRiesgo: c.riskLevel ?? 'OK',
+          hitos
+        };
+
+        return detalle;
+      })
+    );
+  }
+
+  marcarRetiro(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/retiro`, {});
+  }
+
+  marcarDevolucionVacia(id: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/devolucion-vacio`, {});
+  }
+
+  confirmarArriboReal(id: number, fechaArriboReal: string): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/arribo-real`, { fechaArriboReal });
+  }
+
+  actualizarDiasLibres(id: number, demurrageFreeDays: number, detentionFreeDays: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/dias-libres`, { demurrageFreeDays, detentionFreeDays });
+  }
+
+  actualizarDatosExtraidos(id: number, cambios: {
+    naviera?: string;
+    terminalOrigen?: string;
+    terminalLlegada?: string;
+    numeroBl?: string;
+    nombreForwarder?: string;
+    eta?: string;
+  }): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/datos-extraidos`, cambios);
   }
 }

@@ -1,5 +1,10 @@
 <div class="pv-page">
-  @if (detalle(); as c) {
+  @if (cargando()) {
+    <div class="detail-loading">
+      <mat-spinner diameter="32" />
+      <p>Cargando contenedor…</p>
+    </div>
+  } @else if (detalle(); as c) {
     <div class="pv-title-row">
       <button matIconButton matTooltip="Volver al listado" routerLink="/dashboard">
         <mat-icon>arrow_back</mat-icon>
@@ -7,6 +12,10 @@
       <h4 class="pv-page-title">{{ c.numeroContainer }}</h4>
       <app-risk-badge [nivel]="c.nivelRiesgo" />
     </div>
+
+    @if (errorAccion()) {
+      <p class="detail-error">{{ errorAccion() }}</p>
+    }
 
     <div class="pv-box pv-section resumen-grid">
       <div class="detail-col">
@@ -37,19 +46,11 @@
         <div class="detail-label">Estado puerto</div>
         <div class="detail-value">{{ c.estadoPuerto ?? '—' }}</div>
       </div>
-      @if (c.documentoUrl) {
-        <div class="detail-col">
-          <div class="detail-label">Documento</div>
-          <a matButton="outlined" [href]="c.documentoUrl" target="_blank" rel="noopener">
-            <mat-icon>description</mat-icon>Ver documento
-          </a>
-        </div>
-      }
     </div>
 
     <div class="pv-box pv-section resumen-grid">
       <div class="detail-col">
-        <div class="detail-label">ETA</div>
+        <div class="detail-label">Llegada estimada</div>
         <div class="detail-value">{{ c.eta ? (c.eta | date: 'dd-MM-yyyy HH:mm') : '—' }}</div>
       </div>
       <div class="detail-col">
@@ -69,6 +70,41 @@
         <div class="detail-value">{{ c.deadlineDetention ? (c.deadlineDetention | date: 'dd-MM-yyyy HH:mm') : '—' }}</div>
       </div>
     </div>
+
+    @if (puedeEditarDiasLibres()) {
+      <div class="pv-box pv-section">
+        <div class="pv-section-title">Confirmaciones manuales</div>
+        <p class="pv-hint-text">
+          Usa esto cuando el scraper del terminal no pueda confirmar el dato (hoy no entrega fecha de arribo real ni estado de retiro).
+        </p>
+        <div class="pv-btn-group">
+          <button matButton="outlined" [disabled]="accionEnCurso() || !!c.fechaRetiroContainer" (click)="marcarRetiro()">
+            <mat-icon>local_shipping</mat-icon>Marcar retiro
+          </button>
+          <button matButton="outlined" [disabled]="accionEnCurso() || !c.fechaRetiroContainer" (click)="marcarDevolucionVacia()">
+            <mat-icon>assignment_turned_in</mat-icon>Marcar devolución vacía
+          </button>
+          @if (!mostrandoFormArribo()) {
+            <button matButton="outlined" [disabled]="accionEnCurso()" (click)="mostrarFormArribo()">
+              <mat-icon>anchor</mat-icon>{{ c.fechaArriboReal ? 'Corregir arribo real' : 'Confirmar arribo real' }}
+            </button>
+          }
+        </div>
+
+        @if (mostrandoFormArribo()) {
+          <div class="pv-form-row">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>Fecha de arribo real</mat-label>
+              <input matInput type="date" [ngModel]="fechaArriboForm()" (ngModelChange)="fechaArriboForm.set($event)" />
+            </mat-form-field>
+            <div class="pv-form-actions">
+              <button matButton="filled" class="btn-primary" [disabled]="accionEnCurso()" (click)="confirmarArriboReal()">Guardar</button>
+              <button matButton="outlined" (click)="cancelarArribo()">Cancelar</button>
+            </div>
+          </div>
+        }
+      </div>
+    }
 
     <div class="pv-box pv-section">
       <div class="pv-section-title">Días libres</div>
@@ -103,7 +139,7 @@
           </mat-form-field>
         </div>
         <div class="pv-form-actions">
-          <button matButton="filled" class="btn-primary" (click)="guardarDiasLibres()">Guardar</button>
+          <button matButton="filled" class="btn-primary" [disabled]="accionEnCurso()" (click)="guardarDiasLibres()">Guardar</button>
           <button matButton="outlined" (click)="cancelarEdicion()">Cancelar</button>
         </div>
       }
@@ -117,6 +153,8 @@
             <span matListItemTitle>{{ hito.descripcion }}</span>
             <span matListItemLine>{{ hito.origen }} · {{ hito.fechaOcurrencia | date: 'dd-MM-yyyy HH:mm' }}</span>
           </mat-list-item>
+        } @empty {
+          <p class="pv-hint-text">Todavía no hay hitos registrados para este contenedor.</p>
         }
       </mat-nav-list>
     </div>
