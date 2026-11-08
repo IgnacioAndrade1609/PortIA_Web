@@ -1,6 +1,6 @@
 import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -8,16 +8,18 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatDialog } from '@angular/material/dialog';
 import { RiskBadgeComponent } from '../../../../shared/components/risk-badge/risk-badge.component';
 import { NivelRiesgo } from '../../../../shared/models/riesgo.model';
 import { ContainerService } from '../../../../shared/services/container.service';
 import { exportToExcel } from '../../../../shared/utils/excel-export.util';
+import { UploadComponent } from '../../../containers/pages/upload/upload.component';
+import { BulkEditComponent } from '../../../containers/pages/bulk-edit/bulk-edit.component';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
-    RouterLink,
     DatePipe,
     MatTableModule,
     MatFormFieldModule,
@@ -34,6 +36,7 @@ import { exportToExcel } from '../../../../shared/utils/excel-export.util';
 export class DashboardComponent {
   private readonly containerService = inject(ContainerService);
   private readonly router = inject(Router);
+  private readonly dialog = inject(MatDialog);
 
   private readonly todos = this.containerService.lista;
 
@@ -96,12 +99,34 @@ export class DashboardComponent {
     this.router.navigate(['/contenedores', id]);
   }
 
+  abrirCargaDocumentos(): void {
+    const dialogRef = this.dialog.open(UploadComponent, {
+      width: '560px',
+      autoFocus: false
+    });
+
+    dialogRef.afterClosed().subscribe(seSubieronArchivos => {
+      if (seSubieronArchivos) this.containerService.cargarContenedores();
+    });
+  }
+
+  abrirEdicionMasiva(): void {
+    const dialogRef = this.dialog.open(BulkEditComponent, {
+      width: '640px',
+      autoFocus: false
+    });
+
+    dialogRef.afterClosed().subscribe(seAplicaronCambios => {
+      if (seAplicaronCambios) this.containerService.cargarContenedores();
+    });
+  }
+
   exportar(): void {
     const filas = this.filtrados().map(c => ({
       'N° Contenedor': c.numeroContainer,
       Naviera: c.naviera ?? '',
       'Puerto destino': c.puertoDestino ?? '',
-      ETA: c.eta ? new Date(c.eta).toLocaleDateString('es-CL') : '',
+      'Llegada estimada': c.eta ? new Date(c.eta).toLocaleDateString('es-CL') : '',
       Riesgo: c.nivelRiesgo
     }));
     exportToExcel('mis-contenedores', filas);

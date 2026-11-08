@@ -2,27 +2,32 @@ import { Component, inject, signal } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-import { RouterLink } from '@angular/router';
+import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { HttpEventType } from '@angular/common/http';
-import { UploadService } from './upload.service';
+import { UploadService, UploadedDocumentResult } from './upload.service';
 
 type EstadoCargaUi = 'IDLE' | 'SUBIENDO' | 'EXTRAYENDO' | 'COMPLETO' | 'ERROR';
 
 @Component({
   selector: 'app-upload',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, RouterLink],
+  imports: [MatButtonModule, MatIconModule, MatProgressBarModule, MatDialogModule],
   templateUrl: './upload.component.html',
   styleUrl: './upload.component.css'
 })
 export class UploadComponent {
   private uploadService = inject(UploadService);
+  private dialogRef = inject(MatDialogRef<UploadComponent>, { optional: true });
 
   readonly estado = signal<EstadoCargaUi>('IDLE');
   readonly progreso = signal(0);
-  readonly nombreArchivo = signal<string | null>(null);
+  readonly nombresArchivos = signal<string[]>([]);
   readonly arrastrando = signal(false);
   readonly error = signal<string | null>(null);
+  readonly resultados = signal<UploadedDocumentResult[]>([]);
+
+  private static readonly TiposPermitidos = ['application/pdf', 'image/png', 'image/jpeg'];
+  private static readonly TamanoMaximoBytes = 10 * 1024 * 1024;
 
   onDragOver(event: DragEvent): void {
     event.preventDefault();
@@ -36,50 +41,51 @@ export class UploadComponent {
   onDrop(event: DragEvent): void {
     event.preventDefault();
     this.arrastrando.set(false);
-    const archivo = event.dataTransfer?.files?.[0];
-    if (archivo) this.procesar(archivo);
+    const archivos = event.dataTransfer?.files;
+    if (archivos?.length) this.procesar(Array.from(archivos));
   }
 
   onFileSelected(event: Event): void {
-    const archivo = (event.target as HTMLInputElement).files?.[0];
-    if (archivo) this.procesar(archivo);
+    const archivos = (event.target as HTMLInputElement).files;
+    if (archivos?.length) this.procesar(Array.from(archivos));
   }
 
-  private procesar(archivo: File): void {
+  private procesar(archivos: File[]): void {
     this.error.set(null);
-  
-    const tiposPermitidos = ['application/pdf', 'image/png', 'image/jpeg'];
 
-    if (!tiposPermitidos.includes(archivo.type)) {
-      this.error.set('Formato no permitido. Solo se aceptan archivos PDF, PNG o JPG (415).');
-      return;
-    }
-    if (archivo.size > 10 * 1024 * 1024) {
-      this.error.set('El archivo supera los 10 MB permitidos (413).');
+    const archivoInvalido = archivos.find(a => !UploadComponent.TiposPermitidos.includes(a.type));
+    if (archivoInvalido) {
+      this.error.set(`"${archivoInvalido.name}": formato no permitido. Solo se aceptan PDF, PNG o JPG (415).`);
       return;
     }
 
-    this.nombreArchivo.set(archivo.name);
+    const archivoMuyGrande = archivos.find(a => a.size > UploadComponent.TamanoMaximoBytes);
+    if (archivoMuyGrande) {
+      this.error.set(`"${archivoMuyGrande.name}" supera los 10 MB permitidos (413).`);
+      return;
+    }
+
+    this.nombresArchivos.set(archivos.map(a => a.name));
     this.estado.set('SUBIENDO');
     this.progreso.set(0);
 
-    // Llamada real al backend
-    this.uploadService.uploadFile(archivo).subscribe({
+    this.uploadService.uploadFiles(archivos).subscribe({
       next: (event) => {
         if (event.type === HttpEventType.UploadProgress && event.total) {
           const percentDone = Math.round(100 * event.loaded / event.total);
           this.progreso.set(percentDone);
-          
+
           if (percentDone >= 100) {
-            this.estado.set('EXTRAYENDO'); // Cambia a extrayendo una vez completada la subida
+            this.estado.set('EXTRAYENDO');
           }
         } else if (event.type === HttpEventType.Response) {
+          this.resultados.set(event.body?.documents ?? []);
           this.estado.set('COMPLETO');
         }
       },
       error: (err) => {
         this.estado.set('IDLE');
-        this.error.set(err?.error?.message || 'Ocurrió un error al subir el documento.');
+        this.error.set(err?.error?.detail || err?.error?.message || 'Ocurrió un error al subir los documentos.');
       }
     });
   }
@@ -87,7 +93,12 @@ export class UploadComponent {
   reiniciar(): void {
     this.estado.set('IDLE');
     this.progreso.set(0);
-    this.nombreArchivo.set(null);
+    this.nombresArchivos.set([]);
+    this.resultados.set([]);
     this.error.set(null);
+  }
+
+  cerrar(): void {
+    this.dialogRef?.close(this.estado() === 'COMPLETO');
   }
 }

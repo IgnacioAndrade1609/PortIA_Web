@@ -5,3 +5,11 @@ export async function exportToExcel(nombreArchivo: string, filas: Record<string,
   XLSX.utils.book_append_sheet(libro, hoja, 'Datos');
   XLSX.writeFile(libro, `${nombreArchivo}.xlsx`);
 }
+
+export async function parseExcelFile(archivo: File): Promise<Record<string, string>[]> {
+  const XLSX = await import('xlsx');
+  const buffer = await archivo.arrayBuffer();
+  const libro = XLSX.read(buffer, { type: 'array' });
+  const primeraHoja = libro.Sheets[libro.SheetNames[0]];
+  return XLSX.utils.sheet_to_json<Record<string, string>>(primeraHoja, { raw: false, defval: '' });
+}

@@ -1,52 +1,62 @@
-<div class="pv-page">
-  <div class="pv-title-row">
-    <h4 class="pv-page-title">Cargar documento</h4>
-  </div>
+<h2 matDialogTitle>Cargar documentos</h2>
 
-  <div class="pv-box" style="max-width: 560px;">
-    @if (estado() === 'IDLE') {
-      <div
-        class="dropzone"
-        [class.dropzone--active]="arrastrando()"
-        (dragover)="onDragOver($event)"
-        (dragleave)="onDragLeave()"
-        (drop)="onDrop($event)"
-      >
-        <mat-icon>cloud_upload</mat-icon>
-        <p>Arrastra aquí el documento en PDF, PNG o JPG, o selecciona un archivo</p>
-        <input #fileInput type="file" accept="application/pdf,image/png,image/jpeg" hidden (change)="onFileSelected($event)" />
-        <button matButton="outlined" (click)="fileInput.click()">Seleccionar archivo</button>
-        <p class="pv-hint-text">Formato PDF, PNG o JPG, máximo 10 MB</p>
-      </div>
-    }
+<mat-dialog-content>
+  @if (estado() === 'IDLE') {
+    <div
+      class="dropzone"
+      [class.dropzone--active]="arrastrando()"
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave()"
+      (drop)="onDrop($event)"
+    >
+      <mat-icon>cloud_upload</mat-icon>
+      <p>Arrastra aquí uno o varios documentos en PDF, PNG o JPG, o selecciona los archivos</p>
+      <input #fileInput type="file" accept="application/pdf,image/png,image/jpeg" multiple hidden (change)="onFileSelected($event)" />
+      <button matButton="outlined" (click)="fileInput.click()">Seleccionar archivos</button>
+      <p class="pv-hint-text">Formato PDF, PNG o JPG, máximo 10 MB por archivo</p>
+    </div>
+  }
 
-    @if (error()) {
-      <p class="upload-error">{{ error() }}</p>
-    }
+  @if (error()) {
+    <p class="upload-error">{{ error() }}</p>
+  }
 
-    @if (estado() === 'SUBIENDO' || estado() === 'EXTRAYENDO') {
-      <div class="upload-progress">
-        <p>{{ nombreArchivo() }}</p>
-        <mat-progress-bar mode="determinate" [value]="progreso()" />
-        <p class="pv-hint-text">
-          @if (estado() === 'SUBIENDO') {
-            Subiendo documento…
-          } @else {
-            Extrayendo datos con IA (naviera, N° BL, ETA, días libres)…
-          }
-        </p>
-      </div>
-    }
+  @if (estado() === 'SUBIENDO' || estado() === 'EXTRAYENDO') {
+    <div class="upload-progress">
+      <p>{{ nombresArchivos().length }} archivo(s): {{ nombresArchivos().join(', ') }}</p>
+      <mat-progress-bar mode="determinate" [value]="progreso()" />
+      <p class="pv-hint-text">
+        @if (estado() === 'SUBIENDO') {
+          Subiendo documentos…
+        } @else {
+          Extrayendo datos con IA (naviera, N° BL, llegada estimada, días libres)…
+        }
+      </p>
+    </div>
+  }
 
-    @if (estado() === 'COMPLETO') {
-      <div class="upload-success">
-        <mat-icon>check_circle</mat-icon>
-        <p>{{ nombreArchivo() }} procesado correctamente.</p>
-        <div class="pv-btn-group">
-          <a matButton="filled" class="btn-primary" routerLink="/dashboard">Ver en el dashboard</a>
-          <button matButton="outlined" (click)="reiniciar()">Cargar otro documento</button>
-        </div>
-      </div>
-    }
-  </div>
-</div>
+  @if (estado() === 'COMPLETO') {
+    <div class="upload-success">
+      <mat-icon>check_circle</mat-icon>
+      <p>Carga registrada. El procesamiento de cada documento continúa en segundo plano.</p>
+      <table class="upload-results">
+        @for (resultado of resultados(); track resultado.fileName) {
+          <tr>
+            <td>{{ resultado.fileName }}</td>
+            <td [class]="'status-' + resultado.status.toLowerCase()">{{ resultado.status }}</td>
+            <td class="pv-hint-text">{{ resultado.reason }}</td>
+          </tr>
+        }
+      </table>
+    </div>
+  }
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  @if (estado() === 'COMPLETO') {
+    <button matButton="outlined" (click)="reiniciar()">Cargar más documentos</button>
+    <button matButton="filled" class="btn-primary" (click)="cerrar()">Cerrar</button>
+  } @else {
+    <button matButton="outlined" (click)="cerrar()">Cancelar</button>
+  }
+</mat-dialog-actions>
