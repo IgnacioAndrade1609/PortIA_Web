@@ -124,11 +124,23 @@ export class DashboardComponent {
   exportar(): void {
     const filas = this.filtrados().map(c => ({
       'N° Contenedor': c.numeroContainer,
+      'N° BL': c.numeroBl ?? '',
+      Forwarder: c.nombreForwarder ?? '',
       Naviera: c.naviera ?? '',
-      'Puerto destino': c.puertoDestino ?? '',
+      'Terminal origen': c.terminalOrigen ?? '',
+      'Terminal destino': c.puertoDestino ?? '',
       'Llegada estimada': c.eta ? new Date(c.eta).toLocaleDateString('es-CL') : '',
+      'Días libres demurrage': c.diasLibresDemurrage,
+      'Días libres detention': c.diasLibresDetention,
+      'Deadline demurrage': c.deadlineDemurrage ? new Date(c.deadlineDemurrage).toLocaleDateString('es-CL') : '',
+      'Deadline detention': c.deadlineDetention ? new Date(c.deadlineDetention).toLocaleDateString('es-CL') : '',
+      'Estado puerto': c.estadoPuerto ?? '',
       Riesgo: c.nivelRiesgo
     }));
     exportToExcel('mis-contenedores', filas);
+  }
+
+  imprimir(): void {
+    window.print();
   }
 }

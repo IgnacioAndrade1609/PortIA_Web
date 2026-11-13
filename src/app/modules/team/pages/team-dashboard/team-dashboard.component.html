@@ -3,64 +3,187 @@
     <h4 class="pv-page-title">Dashboard de equipo</h4>
   </div>
 
-  <div class="pv-actions-row">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
-      <mat-label>Ver por analista</mat-label>
-      <mat-select [value]="analistaSeleccionado()" (selectionChange)="analistaSeleccionado.set($event.value)">
-        <mat-option value="TODOS">Todo el equipo</mat-option>
-        @for (analista of analistas; track analista.id) {
-          <mat-option [value]="analista.nombreUsuario">{{ analista.nombreUsuario }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+  <div class="pv-actions-row no-print">
+    @if (esAdmin()) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
+        <mat-label>Jefe</mat-label>
+        <mat-select [value]="jefeSeleccionado()" (selectionChange)="seleccionarJefe($event.value)">
+          @for (jefe of jefes(); track jefe.id) {
+            <mat-option [value]="jefe.id">{{ jefe.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+
+    @if (jefeSeleccionado() != null) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
+        <mat-label>Ver por analista</mat-label>
+        <mat-select [value]="analistaSeleccionado()" (selectionChange)="analistaSeleccionado.set($event.value)">
+          <mat-option value="TODOS">Todo el equipo</mat-option>
+          @for (analista of analistas(); track analista.id) {
+            <mat-option [value]="analista.id">{{ analista.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
 
     <span class="pv-spacer"></span>
 
-    <a matButton="outlined" routerLink="/equipo/gestion">
-      <mat-icon>bar_chart</mat-icon>Ver panel de gestión
-    </a>
+    <div class="pv-btn-group">
+      @if (jefeSeleccionado() != null) {
+        <button matButton="outlined" (click)="exportar()">
+          <mat-icon>file_download</mat-icon>Exportar a Excel
+        </button>
+        <button matButton="outlined" (click)="imprimir()">
+          <mat-icon>print</mat-icon>Imprimir
+        </button>
+      }
+      <a matButton="outlined" routerLink="/equipo/gestion" [queryParams]="jefeSeleccionado() != null ? { jefeId: jefeSeleccionado() } : {}">
+        <mat-icon>bar_chart</mat-icon>Ver panel de gestión
+      </a>
+    </div>
   </div>
 
-  <table mat-table [dataSource]="contenedores()" class="pv-table-full mat-elevation-z1">
-    <ng-container matColumnDef="numeroContainer">
-      <th mat-header-cell *matHeaderCellDef>N° Contenedor</th>
-      <td mat-cell *matCellDef="let c">{{ c.numeroContainer }}</td>
-    </ng-container>
+  @if (esAdmin() && jefeSeleccionado() == null) {
+    <p class="pv-hint-text">Selecciona un jefe para ver su equipo.</p>
+  } @else {
+    <table mat-table [dataSource]="contenedores()" class="pv-table-full mat-elevation-z1 screen-only-table">
+      <ng-container matColumnDef="numeroContainer">
+        <th mat-header-cell *matHeaderCellDef>N° Contenedor</th>
+        <td mat-cell *matCellDef="let c">{{ c.numeroContainer }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="asignadoA">
-      <th mat-header-cell *matHeaderCellDef>Analista</th>
-      <td mat-cell *matCellDef="let c">{{ c.asignadoA ?? '—' }}</td>
-    </ng-container>
+      <ng-container matColumnDef="asignadoA">
+        <th mat-header-cell *matHeaderCellDef>Analista</th>
+        <td mat-cell *matCellDef="let c">{{ c.asignadoA ?? '—' }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="naviera">
-      <th mat-header-cell *matHeaderCellDef>Naviera</th>
-      <td mat-cell *matCellDef="let c">{{ c.naviera ?? '—' }}</td>
-    </ng-container>
+      <ng-container matColumnDef="naviera">
+        <th mat-header-cell *matHeaderCellDef>Naviera</th>
+        <td mat-cell *matCellDef="let c">{{ c.naviera ?? '—' }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="eta">
-      <th mat-header-cell *matHeaderCellDef>Llegada estimada</th>
-      <td mat-cell *matCellDef="let c">{{ c.eta ? (c.eta | date: 'dd-MM-yyyy') : '—' }}</td>
-    </ng-container>
+      <ng-container matColumnDef="eta">
+        <th mat-header-cell *matHeaderCellDef>Llegada estimada</th>
+        <td mat-cell *matCellDef="let c">{{ c.eta ? (c.eta | date: 'dd-MM-yyyy') : '—' }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="nivelRiesgo">
-      <th mat-header-cell *matHeaderCellDef>Riesgo</th>
-      <td mat-cell *matCellDef="let c"><app-risk-badge [nivel]="c.nivelRiesgo" /></td>
-    </ng-container>
+      <ng-container matColumnDef="nivelRiesgo">
+        <th mat-header-cell *matHeaderCellDef>Riesgo</th>
+        <td mat-cell *matCellDef="let c"><app-risk-badge [nivel]="c.nivelRiesgo" /></td>
+      </ng-container>
 
-    <ng-container matColumnDef="acciones">
-      <th mat-header-cell *matHeaderCellDef></th>
-      <td mat-cell *matCellDef="let c">
-        <a matIconButton class="btn-icon-primary" [routerLink]="['/contenedores', c.id]" matTooltip="Ver detalle">
-          <mat-icon>visibility</mat-icon>
-        </a>
-      </td>
-    </ng-container>
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let c">
+          <a matIconButton class="btn-icon-primary" [routerLink]="['/contenedores', c.id]" matTooltip="Ver detalle">
+            <mat-icon>visibility</mat-icon>
+          </a>
+        </td>
+      </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-    <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
 
-    <tr class="mat-row" *matNoDataRow>
-      <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">Este analista no tiene contenedores asignados.</td>
-    </tr>
-  </table>
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">Este equipo no tiene contenedores asignados.</td>
+      </tr>
+    </table>
+
+    <table class="print-only-table pv-table-full">
+      <thead>
+        <tr>
+          <th>N° Contenedor</th>
+          <th>Analista</th>
+          <th>N° BL</th>
+          <th>Forwarder</th>
+          <th>Naviera</th>
+          <th>Terminal origen</th>
+          <th>Terminal destino</th>
+          <th>Llegada estimada</th>
+          <th>Días libres demurrage</th>
+          <th>Días libres detention</th>
+          <th>Deadline demurrage</th>
+          <th>Deadline detention</th>
+          <th>Estado puerto</th>
+          <th>Riesgo</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (c of contenedores(); track c.id) {
+          <tr>
+            <td>{{ c.numeroContainer }}</td>
+            <td>{{ c.asignadoA ?? '—' }}</td>
+            <td>{{ c.numeroBl ?? '—' }}</td>
+            <td>{{ c.nombreForwarder ?? '—' }}</td>
+            <td>{{ c.naviera ?? '—' }}</td>
+            <td>{{ c.terminalOrigen ?? '—' }}</td>
+            <td>{{ c.puertoDestino ?? '—' }}</td>
+            <td>{{ c.eta ? (c.eta | date: 'dd-MM-yyyy') : '—' }}</td>
+            <td>{{ c.diasLibresDemurrage }}</td>
+            <td>{{ c.diasLibresDetention }}</td>
+            <td>{{ c.deadlineDemurrage ? (c.deadlineDemurrage | date: 'dd-MM-yyyy') : '—' }}</td>
+            <td>{{ c.deadlineDetention ? (c.deadlineDetention | date: 'dd-MM-yyyy') : '—' }}</td>
+            <td>{{ c.estadoPuerto ?? '—' }}</td>
+            <td>{{ c.nivelRiesgo }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+
+    <div class="pv-section-title">Documentos del equipo</div>
+    <table mat-table [dataSource]="documentos()" class="pv-table-full mat-elevation-z1">
+      <ng-container matColumnDef="tipoDocumento">
+        <th mat-header-cell *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let d">{{ d.tipoDocumento }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="analystName">
+        <th mat-header-cell *matHeaderCellDef>Analista</th>
+        <td mat-cell *matCellDef="let d">{{ d.analystName }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="createAt">
+        <th mat-header-cell *matHeaderCellDef>Fecha de carga</th>
+        <td mat-cell *matCellDef="let d">{{ d.createAt | date: 'dd-MM-yyyy HH:mm' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estadoExtraccion">
+        <th mat-header-cell *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let d">{{ d.estadoExtraccion }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="confidence">
+        <th mat-header-cell *matHeaderCellDef>Confianza IA</th>
+        <td mat-cell *matCellDef="let d">{{ d.confidence != null ? (d.confidence * 100 | number: '1.0-0') + '%' : '—' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="containerNumber">
+        <th mat-header-cell *matHeaderCellDef>Contenedor</th>
+        <td mat-cell *matCellDef="let d">
+          @if (d.containerId) {
+            <a [routerLink]="['/contenedores', d.containerId]">{{ d.containerNumber }}</a>
+          } @else {
+            —
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let d">
+          <button matIconButton class="btn-icon-primary" matTooltip="Ver documento" (click)="abrirDocumento(d.downloadUrl)">
+            <mat-icon>description</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnasDocumentos"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnasDocumentos"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnasDocumentos.length">Este equipo no tiene documentos cargados.</td>
+      </tr>
+    </table>
+  }
 </div>

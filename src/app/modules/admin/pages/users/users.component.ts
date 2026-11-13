@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
+import { debounceTime } from 'rxjs';
 import { MatTableModule } from '@angular/material/table';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -32,7 +33,14 @@ export class UsersComponent implements OnInit {
 
   readonly usuarios = signal<UserDto[]>([]);
   readonly roles = signal<RoleDto[]>([]);
-  readonly columnas = ['nombreUsuario', 'email', 'rol', 'vigente', 'acciones'];
+  readonly jefes = signal<UserDto[]>([]);
+  readonly columnas = ['nombreUsuario', 'email', 'rol', 'jefe', 'vigente', 'acciones'];
+
+  readonly filterForm = this.fb.nonNullable.group({
+    search: [''],
+    roleId: this.fb.control<number | null>(null),
+    active: this.fb.nonNullable.control<'all' | 'active' | 'inactive'>('all')
+  });
 
   readonly mostrandoFormulario = signal(false);
   readonly guardando = signal(false);
@@ -40,6 +48,7 @@ export class UsersComponent implements OnInit {
 
   readonly editandoDatosId = signal<number | null>(null);
   readonly editandoRolId = signal<number | null>(null);
+  readonly editandoJefeId = signal<number | null>(null);
 
   readonly form = this.fb.nonNullable.group({
     nombreUsuario: ['', Validators.required],
@@ -58,9 +67,20 @@ export class UsersComponent implements OnInit {
     roleId: this.fb.control<number | null>(null, Validators.required)
   });
 
+  readonly editJefeForm = this.fb.nonNullable.group({
+    jefeId: this.fb.control<number | null>(null)
+  });
+
   ngOnInit(): void {
     this.cargarUsuarios();
     this.cargarRoles();
+    this.cargarJefes();
+
+    this.filterForm.valueChanges.pipe(debounceTime(300)).subscribe(() => this.cargarUsuarios());
+  }
+
+  limpiarFiltros(): void {
+    this.filterForm.reset({ search: '', roleId: null, active: 'all' });
   }
 
   crear(): void {
@@ -89,6 +109,7 @@ export class UsersComponent implements OnInit {
 
   iniciarEdicionDatos(usuario: UserDto): void {
     this.editandoRolId.set(null);
+    this.editandoJefeId.set(null);
     this.editandoDatosId.set(usuario.id);
     this.editDatosForm.setValue({
       name: usuario.name,
@@ -121,6 +142,7 @@ export class UsersComponent implements OnInit {
 
   iniciarEdicionRol(usuario: UserDto): void {
     this.editandoDatosId.set(null);
+    this.editandoJefeId.set(null);
     this.editandoRolId.set(usuario.id);
     this.editRolForm.setValue({
       roleId: usuario.role.id
@@ -145,8 +167,36 @@ export class UsersComponent implements OnInit {
       next: () => {
         this.editandoRolId.set(null);
         this.cargarUsuarios();
+        this.cargarJefes();
       },
       error: () => this.error.set('No se pudo actualizar el rol del usuario.')
+    });
+  }
+
+  iniciarEdicionJefe(usuario: UserDto): void {
+    this.editandoDatosId.set(null);
+    this.editandoRolId.set(null);
+    this.editandoJefeId.set(usuario.id);
+    this.editJefeForm.setValue({
+      jefeId: usuario.supervisor?.id ?? null
+    });
+  }
+
+  cancelarEdicionJefe(): void {
+    this.editandoJefeId.set(null);
+    this.editJefeForm.reset();
+  }
+
+  guardarJefe(id: number): void {
+    this.error.set(null);
+    const { jefeId } = this.editJefeForm.getRawValue();
+
+    this.userService.updateSupervisor(id, jefeId).subscribe({
+      next: () => {
+        this.editandoJefeId.set(null);
+        this.cargarUsuarios();
+      },
+      error: () => this.error.set('No se pudo actualizar el jefe asignado.')
     });
   }
 
@@ -158,7 +208,13 @@ export class UsersComponent implements OnInit {
   }
 
   private cargarUsuarios(): void {
-    this.userService.getUsers().subscribe({
+    const { search, roleId, active } = this.filterForm.getRawValue();
+
+    this.userService.getUsers({
+      search: search || null,
+      roleId,
+      active: active === 'all' ? null : active === 'active'
+    }).subscribe({
       next: resultado => this.usuarios.set(resultado.items),
       error: () => this.error.set('No se pudieron cargar los usuarios.')
     });
@@ -167,6 +223,12 @@ export class UsersComponent implements OnInit {
   private cargarRoles(): void {
     this.userService.getRoles().subscribe({
       next: roles => this.roles.set(roles)
+    });
+  }
+
+  private cargarJefes(): void {
+    this.userService.getUsers({ pageSize: 1000 }).subscribe({
+      next: resultado => this.jefes.set(resultado.items.filter(u => u.role.name === 'Jefe'))
     });
   }
 }

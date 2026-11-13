@@ -1,9 +1,34 @@
 import { Injectable, inject, signal } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { forkJoin, map, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { BackendContainer, ContainerDetail, ContainerListItem } from '../models/container.model';
 import { Hito } from '../models/hito.model';
+
+export interface ContainerTeamFilter {
+  jefeId?: number | null;
+  assignedTo?: number | null;
+}
+
+function toListItem(c: BackendContainer): ContainerListItem {
+  return {
+    id: c.id,
+    numeroContainer: c.containerNumber,
+    numeroBl: c.blNumber,
+    nombreForwarder: c.forwarderName,
+    naviera: c.shippingLine?.name && c.shippingLine.name !== 'N/A' ? c.shippingLine.name : null,
+    terminalOrigen: c.originTerminal?.name ?? null,
+    puertoDestino: c.destinationTerminal?.name ?? null,
+    eta: c.eta,
+    diasLibresDemurrage: c.demurrageFreeDays,
+    diasLibresDetention: c.detentionFreeDays,
+    deadlineDemurrage: c.demurrageDeadline,
+    deadlineDetention: c.detentionDeadline,
+    estadoPuerto: c.portStatus,
+    nivelRiesgo: c.riskLevel ?? 'OK',
+    asignadoA: c.assignedTo?.name
+  };
+}
 
 @Injectable({ providedIn: 'root' })
 export class ContainerService {
@@ -20,24 +45,20 @@ export class ContainerService {
 
   cargarContenedores(): void {
     this.http.get<BackendContainer[]>(this.apiUrl).pipe(
-      tap(data => {
-        const contenedoresMapeados: ContainerListItem[] = data.map(c => ({
-          id: c.id,
-          numeroContainer: c.containerNumber,
-          naviera: c.shippingLine?.name && c.shippingLine.name !== 'N/A' ? c.shippingLine.name : null,
-          puertoDestino: c.destinationTerminal?.name ?? null,
-          eta: c.eta,
-          deadlineDemurrage: c.demurrageDeadline,
-          deadlineDetention: c.detentionDeadline,
-          nivelRiesgo: c.riskLevel ?? 'OK',
-          asignadoA: c.assignedTo?.name
-        }));
-
-        this.listaSignal.set(contenedoresMapeados);
-      })
+      tap(data => this.listaSignal.set(data.map(toListItem)))
     ).subscribe({
       error: (err) => console.error('Error al cargar contenedores desde la API:', err)
     });
+  }
+
+  listarPorEquipo(filter: ContainerTeamFilter): Observable<ContainerListItem[]> {
+    let params = new HttpParams();
+    if (filter.jefeId != null) params = params.set('jefeId', filter.jefeId);
+    if (filter.assignedTo != null) params = params.set('assignedTo', filter.assignedTo);
+
+    return this.http.get<BackendContainer[]>(this.apiUrl, { params }).pipe(
+      map(data => data.map(toListItem))
+    );
   }
 
   listarCompleto(): Observable<BackendContainer[]> {
