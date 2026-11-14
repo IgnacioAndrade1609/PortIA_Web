@@ -1,4 +1,4 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { BorradorCorreo } from '../models/notificacion.model';
 import { MOCK_BORRADORES } from '../mocks/notificaciones.mock';
 
@@ -8,23 +8,25 @@ export class NotificationService {
 
   readonly borradores = this.borradoresSignal.asReadonly();
 
-  actualizarContenido(idAlerta: number, asunto: string, contenido: string): void {
+  readonly pendientes = computed(() =>
+    this.borradoresSignal().filter(b => b.estado === 'PENDIENTE_APROBACION')
+  );
+
+  obtenerPorId(idLogNotificacion: number): BorradorCorreo | undefined {
+    return this.borradoresSignal().find(b => b.idLogNotificacion === idLogNotificacion);
+  }
+
+  guardarBorrador(idLogNotificacion: number, asunto: string, contenido: string): void {
     this.borradoresSignal.update(lista =>
-      lista.map(b => (b.idAlerta === idAlerta ? { ...b, asunto, contenido } : b))
+      lista.map(b => (b.idLogNotificacion === idLogNotificacion ? { ...b, asunto, contenido } : b))
     );
   }
 
-  aprobar(idAlerta: number): void {
-    this.cambiarEstado(idAlerta, 'APROBADA');
-  }
-
-  rechazar(idAlerta: number): void {
-    this.cambiarEstado(idAlerta, 'RECHAZADA');
-  }
-
-  private cambiarEstado(idAlerta: number, estado: BorradorCorreo['estado']): void {
+  enviar(idLogNotificacion: number, asunto: string, contenido: string): void {
     this.borradoresSignal.update(lista =>
-      lista.map(b => (b.idAlerta === idAlerta ? { ...b, estado } : b))
+      lista.map(b =>
+        b.idLogNotificacion === idLogNotificacion ? { ...b, asunto, contenido, estado: 'ENVIADA' } : b
+      )
     );
   }
 }

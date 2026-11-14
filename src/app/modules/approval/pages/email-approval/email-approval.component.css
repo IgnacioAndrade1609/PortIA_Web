@@ -2,13 +2,10 @@
   margin-top: -12px;
 }
 
-.approval-card {
-  max-width: 640px;
+.approval-row {
+  cursor: pointer;
 }
 
-.approval-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+.approval-row:hover {
+  background: rgba(0, 0, 0, 0.04);
 }

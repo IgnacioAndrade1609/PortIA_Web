@@ -34,7 +34,7 @@ export class ShellComponent {
           { path: '/dashboard', label: 'Mis contenedores', icon: 'dashboard' },
           { path: '/contenedores/revision', label: 'Revisión', icon: 'fact_check' },
           { path: '/alertas', label: 'Alertas', icon: 'notifications' },
-          { path: '/aprobacion-correo', label: 'Aprobación de correo', icon: 'mail' },
+          { path: '/aprobacion-correo', label: 'Aprobacion de Mensaje', icon: 'mail' },
           { path: '/auditoria/mia', label: 'Mi historial', icon: 'history' }
         ];
       case 'Jefe':

@@ -47,7 +47,14 @@ export const routes: Routes = [
         canActivate: [roleGuard(['Analista'])],
         loadComponent: () =>
           import('./modules/approval/pages/email-approval/email-approval.component').then(m => m.EmailApprovalComponent),
-        data: { breadcrumb: 'Aprobación de correo' }
+        data: { breadcrumb: 'Aprobacion de Mensaje' }
+      },
+      {
+        path: 'aprobacion-correo/:id',
+        canActivate: [roleGuard(['Analista'])],
+        loadComponent: () =>
+          import('./modules/approval/pages/email-detail/email-detail.component').then(m => m.EmailDetailComponent),
+        data: { breadcrumb: 'Detalle de correo' }
       },
       {
         path: 'auditoria/mia',
