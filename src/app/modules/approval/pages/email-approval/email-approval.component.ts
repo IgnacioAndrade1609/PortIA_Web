@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { MatTableModule } from '@angular/material/table';
@@ -12,9 +12,13 @@ import { NotificationService } from '../../../../shared/services/notification.se
   templateUrl: './email-approval.component.html',
   styleUrl: './email-approval.component.css'
 })
-export class EmailApprovalComponent {
+export class EmailApprovalComponent implements OnInit {
   private readonly notificationService = inject(NotificationService);
 
   readonly pendientes = this.notificationService.pendientes;
-  readonly columnas = ['numeroContainer', 'canal', 'asunto', 'destinatario', 'createAt', 'estado'];
+  readonly columnas = ['numeroContainer', 'canal', 'asunto', 'destinatario', 'fechaAlerta', 'estado'];
+
+  ngOnInit(): void {
+    this.notificationService.cargarPendientes();
+  }
 }
