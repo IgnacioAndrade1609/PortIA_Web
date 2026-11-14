@@ -119,6 +119,10 @@ export class ContainerDetailComponent {
     );
   }
 
+  imprimir(): void {
+    window.print();
+  }
+
   private ejecutarAccion(accion: Observable<void>, onSuccess?: () => void): void {
     this.accionEnCurso.set(true);
     this.errorAccion.set(null);

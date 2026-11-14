@@ -1,8 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { CreateUserRequest, PagedResult, RoleDto, UserDto } from '../models/usuario.model';
+
+export interface UserQueryFilter {
+  search?: string | null;
+  roleId?: number | null;
+  jefeId?: number | null;
+  active?: boolean | null;
+  page?: number;
+  pageSize?: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class UserService {
@@ -10,10 +19,17 @@ export class UserService {
   private readonly usersUrl = `${environment.apiUrl}/users`;
   private readonly rolesUrl = `${environment.apiUrl}/roles`;
 
-  getUsers(): Observable<PagedResult<UserDto>> {
-    return this.http.get<PagedResult<UserDto>>(this.usersUrl, {
-      params: { page: 1, pageSize: 100 }
-    });
+  getUsers(filter: UserQueryFilter = {}): Observable<PagedResult<UserDto>> {
+    let params = new HttpParams()
+      .set('page', filter.page ?? 1)
+      .set('pageSize', filter.pageSize ?? 100);
+
+    if (filter.search) params = params.set('search', filter.search);
+    if (filter.roleId != null) params = params.set('roleId', filter.roleId);
+    if (filter.jefeId != null) params = params.set('jefeId', filter.jefeId);
+    if (filter.active != null) params = params.set('active', filter.active);
+
+    return this.http.get<PagedResult<UserDto>>(this.usersUrl, { params });
   }
 
   getRoles(): Observable<RoleDto[]> {
@@ -35,5 +51,9 @@ export class UserService {
 
   updateStatus(id: number, active: boolean): Observable<UserDto> {
     return this.http.patch<UserDto>(`${this.usersUrl}/${id}/status`, { active });
+  }
+
+  updateSupervisor(id: number, jefeId: number | null): Observable<UserDto> {
+    return this.http.put<UserDto>(`${this.usersUrl}/${id}/supervisor`, { jefeId });
   }
 }

@@ -32,6 +32,11 @@ export interface RoleDto {
   active: boolean;
 }
 
+export interface SupervisorSummary {
+  id: number;
+  name: string;
+}
+
 export interface UserDto {
   id: number;
   name: string;
@@ -39,6 +44,7 @@ export interface UserDto {
   role: RoleSummary;
   active: boolean;
   createdAt: string;
+  supervisor: SupervisorSummary | null;
 }
 
 export interface CreateUserRequest {

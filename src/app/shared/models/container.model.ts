@@ -40,11 +40,17 @@ export interface BackendContainer {
 export interface ContainerListItem {
   id: number;
   numeroContainer: string;
+  numeroBl: string | null;
+  nombreForwarder: string | null;
   naviera: string | null;
+  terminalOrigen: string | null;
   puertoDestino: string | null;
   eta: string | null;
+  diasLibresDemurrage: number;
+  diasLibresDetention: number;
   deadlineDemurrage: string | null;
   deadlineDetention: string | null;
+  estadoPuerto: string | null;
   nivelRiesgo: NivelRiesgo;
   asignadoA?: string;
 }

@@ -3,35 +3,102 @@
     <h4 class="pv-page-title">Panel de gestión</h4>
   </div>
 
-  <div class="pv-box pv-section resumen-grid">
-    <div class="detail-col">
-      <div class="detail-label">Contenedores del equipo</div>
-      <div class="detail-value">{{ totalEquipo() }}</div>
+  @if (esAdmin()) {
+    <div class="pv-actions-row">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
+        <mat-label>Jefe</mat-label>
+        <mat-select [value]="jefeSeleccionado()" (selectionChange)="seleccionarJefe($event.value)">
+          @for (jefe of jefes(); track jefe.id) {
+            <mat-option [value]="jefe.id">{{ jefe.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
     </div>
-    <div class="detail-col">
-      <div class="detail-label">En advertencia</div>
-      <div class="detail-value detail-value--warning">{{ totalWarning() }}</div>
-    </div>
-    <div class="detail-col">
-      <div class="detail-label">En estado crítico</div>
-      <div class="detail-value detail-value--error">{{ totalCritical() }}</div>
-    </div>
-    <div class="detail-col">
-      <div class="detail-label">Vencidos</div>
-      <div class="detail-value">{{ totalOverdue() }}</div>
-    </div>
-  </div>
+  }
 
-  <div class="pv-section-title">Carga de trabajo por analista</div>
-  <div class="pv-box workload-list">
-    @for (fila of cargaPorAnalista(); track fila.nombre) {
-      <div class="workload-row">
-        <span class="workload-name">{{ fila.nombre }}</span>
-        <div class="workload-bar-track">
-          <div class="workload-bar-fill" [style.width.%]="fila.porcentaje"></div>
-        </div>
-        <span class="workload-count">{{ fila.cantidad }}</span>
+  @if (esAdmin() && jefeSeleccionado() == null) {
+    <p class="pv-hint-text">Selecciona un jefe para ver el panel de su equipo.</p>
+  } @else {
+    <div class="pv-toolbar-row">
+      <div class="pv-btn-group">
+        <button mat-stroked-button [class.active-preset]="preset() === 7" (click)="seleccionarPreset(7)">7 días</button>
+        <button mat-stroked-button [class.active-preset]="preset() === 30" (click)="seleccionarPreset(30)">30 días</button>
+        <button mat-stroked-button [class.active-preset]="preset() === 90" (click)="seleccionarPreset(90)">90 días</button>
       </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field">
+        <mat-label>Desde</mat-label>
+        <input matInput [matDatepicker]="pickerDesde" [ngModel]="fromDate()" [max]="toDate()"
+               (ngModelChange)="onFromDateChange($event); activarRangoCustom()">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
+        <mat-datepicker #pickerDesde></mat-datepicker>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field">
+        <mat-label>Hasta</mat-label>
+        <input matInput [matDatepicker]="pickerHasta" [ngModel]="toDate()" [min]="fromDate()" [max]="today"
+               (ngModelChange)="onToDateChange($event); activarRangoCustom()">
+        <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
+        <mat-datepicker #pickerHasta></mat-datepicker>
+      </mat-form-field>
+
+      <span class="pv-spacer"></span>
+    </div>
+
+    @if (error()) {
+      <p class="login-error">{{ error() }}</p>
     }
-  </div>
+
+    <div class="pv-box pv-section resumen-grid">
+      <div class="detail-col">
+        <div class="detail-label">Contenedores del equipo</div>
+        <div class="detail-value">{{ totalContenedores() }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Tiempo promedio de reacción (alertas críticas)</div>
+        <div class="detail-value">{{ reaccionLabel() }}</div>
+      </div>
+    </div>
+
+    <div class="pv-section-title">Contenedores por nivel de riesgo</div>
+    <div class="pv-box">
+      @if (riskSegments().length > 0) {
+        <div class="segmented-bar" role="img" [attr.aria-label]="'Contenedores por nivel de riesgo: ' + riskSegments().map(s => s.label + ' ' + s.count).join(', ')">
+          @for (seg of riskSegments(); track seg.level) {
+            <div class="segmented-bar__block"
+                 [style.width.%]="seg.pct"
+                 [style.background-color]="seg.color"
+                 [style.color]="seg.textColor"
+                 [title]="seg.label + ': ' + seg.count">
+              @if (seg.showLabel) { {{ seg.count }} }
+            </div>
+          }
+        </div>
+        <div class="segmented-bar__legend">
+          @for (seg of riskSegments(); track seg.level) {
+            <span class="segmented-bar__legend-item">
+              <span class="segmented-bar__swatch" [style.background-color]="seg.color"></span>
+              {{ seg.label }}
+            </span>
+          }
+        </div>
+      } @else {
+        <p class="pv-hint-text">Sin contenedores en este equipo.</p>
+      }
+    </div>
+
+    <div class="pv-section-title">Alertas generadas y gestionadas por analista</div>
+    <div class="pv-box chart-box">
+      @if ((dashboard()?.alertsByAnalyst?.length ?? 0) > 0) {
+        <canvas baseChart [data]="alertsChartData()" [options]="alertsChartOptions()" type="bar"></canvas>
+      } @else {
+        <p class="pv-hint-text">Este equipo no tiene analistas asignados.</p>
+      }
+    </div>
+
+    <div class="pv-section-title">Documentos cargados por período</div>
+    <div class="pv-box chart-box">
+      <canvas baseChart [data]="documentsChartData()" [options]="documentsChartOptions()" type="line"></canvas>
+    </div>
+  }
 </div>

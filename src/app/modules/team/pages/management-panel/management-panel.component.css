@@ -64,3 +64,56 @@
   text-align: right;
   color: var(--mat-sys-on-surface-variant);
 }
+
+.chart-box {
+  position: relative;
+  height: 320px;
+  margin-bottom: 24px;
+}
+
+.active-preset {
+  background-color: var(--brand-primary);
+  color: #ffffff;
+}
+
+.segmented-bar {
+  display: flex;
+  gap: 2px;
+  height: 28px;
+  width: 100%;
+}
+
+.segmented-bar__block {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding-left: 8px;
+  border-radius: 4px;
+  font-size: var(--pv-font-size-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 4px;
+}
+
+.segmented-bar__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.segmented-bar__legend-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--pv-font-size-sm);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.segmented-bar__swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}

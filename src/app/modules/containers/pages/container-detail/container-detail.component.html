@@ -6,11 +6,15 @@
     </div>
   } @else if (detalle(); as c) {
     <div class="pv-title-row">
-      <button matIconButton matTooltip="Volver al listado" routerLink="/dashboard">
+      <button matIconButton matTooltip="Volver al listado" routerLink="/dashboard" class="no-print">
         <mat-icon>arrow_back</mat-icon>
       </button>
       <h4 class="pv-page-title">{{ c.numeroContainer }}</h4>
       <app-risk-badge [nivel]="c.nivelRiesgo" />
+      <span class="pv-spacer"></span>
+      <button matButton="outlined" class="no-print" (click)="imprimir()">
+        <mat-icon>print</mat-icon>Imprimir
+      </button>
     </div>
 
     @if (errorAccion()) {
@@ -72,7 +76,7 @@
     </div>
 
     @if (puedeEditarDiasLibres()) {
-      <div class="pv-box pv-section">
+      <div class="pv-box pv-section no-print">
         <div class="pv-section-title">Confirmaciones manuales</div>
         <p class="pv-hint-text">
           Usa esto cuando el scraper del terminal no pueda confirmar el dato (hoy no entrega fecha de arribo real ni estado de retiro).
@@ -121,7 +125,7 @@
           </div>
         </div>
         @if (puedeEditarDiasLibres()) {
-          <div class="pv-form-actions">
+          <div class="pv-form-actions no-print">
             <button matButton="outlined" (click)="iniciarEdicion()">
               <mat-icon>edit</mat-icon>Corregir días libres
             </button>
