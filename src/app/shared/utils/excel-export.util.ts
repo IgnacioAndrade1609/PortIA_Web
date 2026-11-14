@@ -9,7 +9,8 @@ export async function exportToExcel(nombreArchivo: string, filas: Record<string,
 export async function parseExcelFile(archivo: File): Promise<Record<string, string>[]> {
   const XLSX = await import('xlsx');
   const buffer = await archivo.arrayBuffer();
-  const libro = XLSX.read(buffer, { type: 'array' });
+  const formatoFecha = 'dd-mm-yyyy';
+  const libro = XLSX.read(buffer, { type: 'array', dateNF: formatoFecha });
   const primeraHoja = libro.Sheets[libro.SheetNames[0]];
-  return XLSX.utils.sheet_to_json<Record<string, string>>(primeraHoja, { raw: false, defval: '' });
+  return XLSX.utils.sheet_to_json<Record<string, string>>(primeraHoja, { raw: false, defval: '', dateNF: formatoFecha });
 }
