@@ -92,7 +92,62 @@
     </mat-tab>
 
     <mat-tab label="Terminales">
-      <table mat-table [dataSource]="terminales()" class="pv-table-full mat-elevation-z1" style="margin-top: 16px;">
+      <div class="pv-actions-row" style="margin-top: 16px;">
+        <span class="pv-spacer"></span>
+        <button matButton="filled" class="btn-primary" (click)="alternarFormularioTerminal()">
+          <mat-icon>{{ mostrandoFormTerminal() ? 'close' : 'add' }}</mat-icon>
+          {{ mostrandoFormTerminal() ? 'Cancelar' : 'Nuevo terminal' }}
+        </button>
+      </div>
+
+      @if (errorTerminal()) {
+        <p class="login-error">{{ errorTerminal() }}</p>
+      }
+
+      @if (mostrandoFormTerminal()) {
+        <form [formGroup]="formTerminal" (ngSubmit)="guardarTerminal()" class="pv-box pv-section">
+          <div class="pv-form-row">
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>Código</mat-label>
+              <input matInput formControlName="codigoTerminal" maxlength="10" />
+              @if (formTerminal.controls.codigoTerminal.hasError('required')) {
+                <mat-error>El código es obligatorio.</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>Nombre</mat-label>
+              <input matInput formControlName="nombreTerminal" />
+              @if (formTerminal.controls.nombreTerminal.hasError('required')) {
+                <mat-error>El nombre es obligatorio.</mat-error>
+              }
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>País</mat-label>
+              <mat-select formControlName="idPais">
+                <mat-option [value]="null">Sin país</mat-option>
+                @for (p of paises(); track p.id) {
+                  <mat-option [value]="p.id">{{ p.nombrePais }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>Sitio / configuración scraper</mat-label>
+              <input matInput formControlName="configScraper" />
+            </mat-form-field>
+          </div>
+          <div class="pv-form-actions">
+            <button matButton="filled" class="btn-primary" type="submit" [disabled]="guardandoTerminal()">
+              {{ terminalEditandoId() === null ? 'Crear' : 'Guardar cambios' }}
+            </button>
+          </div>
+        </form>
+      }
+
+      @if (cargandoTerminales()) {
+        <p class="pv-section-subtitle">Cargando terminales...</p>
+      }
+
+      <table mat-table [dataSource]="terminales()" class="pv-table-full mat-elevation-z1">
         <ng-container matColumnDef="codigoTerminal">
           <th mat-header-cell *matHeaderCellDef>Código</th>
           <td mat-cell *matCellDef="let t">{{ t.codigoTerminal }}</td>
@@ -105,10 +160,22 @@
           <th mat-header-cell *matHeaderCellDef>País</th>
           <td mat-cell *matCellDef="let t">{{ t.pais ?? '—' }}</td>
         </ng-container>
+        <ng-container matColumnDef="configScraper">
+          <th mat-header-cell *matHeaderCellDef>Sitio</th>
+          <td mat-cell *matCellDef="let t">{{ t.configScraper ?? '—' }}</td>
+        </ng-container>
         <ng-container matColumnDef="vigente">
           <th mat-header-cell *matHeaderCellDef>Vigente</th>
           <td mat-cell *matCellDef="let t">
-            <mat-slide-toggle [checked]="t.vigente" (change)="alternarVigenciaTerminal(t.id)" />
+            <mat-slide-toggle [checked]="t.vigente" (change)="alternarVigenciaTerminal(t, $event)" />
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="acciones">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let t">
+            <button matIconButton type="button" aria-label="Editar terminal" (click)="editarTerminal(t)">
+              <mat-icon>edit</mat-icon>
+            </button>
           </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="columnasTerminal"></tr>

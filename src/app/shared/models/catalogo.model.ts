@@ -18,6 +18,20 @@ export interface Terminal {
   id: number;
   codigoTerminal: string;
   nombreTerminal: string;
+  idPais: number | null;
   pais: string | null;
+  configScraper: string | null;
   vigente: boolean;
+}
+
+export interface TerminalRequest {
+  codigoTerminal: string;
+  nombreTerminal: string;
+  idPais: number | null;
+  configScraper: string | null;
+}
+
+export interface Pais {
+  id: number;
+  nombrePais: string;
 }
