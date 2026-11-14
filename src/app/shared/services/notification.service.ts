@@ -1,32 +1,40 @@
-import { Injectable, computed, signal } from '@angular/core';
-import { BorradorCorreo } from '../models/notificacion.model';
-import { MOCK_BORRADORES } from '../mocks/notificaciones.mock';
+import { Injectable, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
+import { environment } from '../../../environments/environment';
+import { AlertaPendiente, NotificationDetail, SendNotificationRequest } from '../models/notificacion.model';
 
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
-  private readonly borradoresSignal = signal<BorradorCorreo[]>(MOCK_BORRADORES);
+  private readonly http = inject(HttpClient);
+  private readonly apiUrl = `${environment.apiUrl}/notifications`;
 
-  readonly borradores = this.borradoresSignal.asReadonly();
+  private readonly pendientesSignal = signal<AlertaPendiente[]>([]);
+  readonly pendientes = this.pendientesSignal.asReadonly();
 
-  readonly pendientes = computed(() =>
-    this.borradoresSignal().filter(b => b.estado === 'PENDIENTE_APROBACION')
-  );
 
-  obtenerPorId(idLogNotificacion: number): BorradorCorreo | undefined {
-    return this.borradoresSignal().find(b => b.idLogNotificacion === idLogNotificacion);
+  cargarPendientes(): void {
+    this.http.get<AlertaPendiente[]>(`${this.apiUrl}/alertas/mias`).subscribe({
+      next: (datos) => this.pendientesSignal.set(datos),
+      error: (err) => console.error('Error al cargar alertas pendientes de notificación:', err)
+    });
   }
 
-  guardarBorrador(idLogNotificacion: number, asunto: string, contenido: string): void {
-    this.borradoresSignal.update(lista =>
-      lista.map(b => (b.idLogNotificacion === idLogNotificacion ? { ...b, asunto, contenido } : b))
-    );
+
+  obtenerDetalle(alertaId: number, canalId: number = 1): Observable<NotificationDetail> {
+    return this.http.get<NotificationDetail>(`${this.apiUrl}/${alertaId}`, {
+      params: { canalId: canalId.toString() }
+    });
   }
 
-  enviar(idLogNotificacion: number, asunto: string, contenido: string): void {
-    this.borradoresSignal.update(lista =>
-      lista.map(b =>
-        b.idLogNotificacion === idLogNotificacion ? { ...b, asunto, contenido, estado: 'ENVIADA' } : b
-      )
+
+  enviar(alertaId: number, request: SendNotificationRequest): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${alertaId}/send`, request).pipe(
+      tap(() => {
+        this.pendientesSignal.update(lista =>
+          lista.filter(p => !(p.alertaId === alertaId && p.canalId === request.canalId))
+        );
+      })
     );
   }
 }

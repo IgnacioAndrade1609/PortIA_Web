@@ -1,45 +1,47 @@
 <div class="pv-page">
-  @if (borrador(); as b) {
+  @if (detalle(); as d) {
     <div class="pv-title-row">
-      <h4 class="pv-page-title">Mensaje #{{ b.idLogNotificacion }}</h4>
+      <h4 class="pv-page-title">Notificación para contenedor {{ d.contenedor }}</h4>
     </div>
 
     <div class="pv-box pv-section detail-card">
       <div class="detail-header">
-        <span class="pv-section-title">{{ b.numeroContainer }}</span>
-        <app-chip [color]="editable ? 'warning' : 'success'">{{ b.estado }}</app-chip>
+        <span class="pv-section-title">{{ d.contenedor }}</span>
+        <app-chip color="warning">Pendiente de aprobación</app-chip>
       </div>
 
+      <!-- Campo protegido: solo lectura y deshabilitado -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
         <mat-label>Tipo de canal</mat-label>
-        <input matInput [value]="b.canal" disabled />
+        <input matInput [value]="d.nombreCanal" readonly disabled />
       </mat-form-field>
 
+      <!-- Campo protegido: solo lectura y deshabilitado para evitar inyección -->
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
         <mat-label>Destinatario</mat-label>
-        <input matInput [value]="b.destinatario" disabled />
+        <input matInput [value]="d.destinatario" readonly disabled />
       </mat-form-field>
 
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
         <mat-label>Asunto</mat-label>
-        <input matInput [(ngModel)]="asunto" [disabled]="!editable" />
+        <input matInput [(ngModel)]="asunto" />
       </mat-form-field>
 
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
-        <mat-label>Contenido</mat-label>
-        <textarea matInput rows="12" [(ngModel)]="contenido" [disabled]="!editable"></textarea>
+        <mat-label>Contenido del mensaje</mat-label>
+        <textarea matInput rows="12" [(ngModel)]="contenido"></textarea>
       </mat-form-field>
 
       <div class="pv-form-actions">
-        <button matButton="outlined" (click)="cancelar()">{{ editable ? 'Cancelar' : 'Volver' }}</button>
-        @if (editable) {
-          <button matButton="outlined" [disabled]="!valido" (click)="guardar()">Guardar borrador</button>
-          <button matButton="filled" class="btn-primary" [disabled]="!valido" (click)="enviar()">Enviar</button>
-        }
+        <button matButton="outlined" (click)="cancelar()" [disabled]="enviando()">Cancelar</button>
+        <!-- Botón de guardar borrador eliminado -->
+        <button matButton="filled" class="btn-primary" [disabled]="!valido || enviando()" (click)="enviar()">
+          {{ enviando() ? 'Enviando...' : 'Enviar' }}
+        </button>
       </div>
     </div>
   } @else {
-    <p class="pv-hint-text">No se encontró el correo solicitado.</p>
+    <p class="pv-hint-text">Cargando datos de la notificación...</p>
     <button matButton="outlined" (click)="cancelar()">Volver</button>
   }
 </div>
