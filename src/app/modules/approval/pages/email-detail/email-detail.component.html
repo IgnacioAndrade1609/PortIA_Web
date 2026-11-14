@@ -1,0 +1,45 @@
+<div class="pv-page">
+  @if (borrador(); as b) {
+    <div class="pv-title-row">
+      <h4 class="pv-page-title">Mensaje #{{ b.idLogNotificacion }}</h4>
+    </div>
+
+    <div class="pv-box pv-section detail-card">
+      <div class="detail-header">
+        <span class="pv-section-title">{{ b.numeroContainer }}</span>
+        <app-chip [color]="editable ? 'warning' : 'success'">{{ b.estado }}</app-chip>
+      </div>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
+        <mat-label>Tipo de canal</mat-label>
+        <input matInput [value]="b.canal" disabled />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
+        <mat-label>Destinatario</mat-label>
+        <input matInput [value]="b.destinatario" disabled />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
+        <mat-label>Asunto</mat-label>
+        <input matInput [(ngModel)]="asunto" [disabled]="!editable" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
+        <mat-label>Contenido</mat-label>
+        <textarea matInput rows="12" [(ngModel)]="contenido" [disabled]="!editable"></textarea>
+      </mat-form-field>
+
+      <div class="pv-form-actions">
+        <button matButton="outlined" (click)="cancelar()">{{ editable ? 'Cancelar' : 'Volver' }}</button>
+        @if (editable) {
+          <button matButton="outlined" [disabled]="!valido" (click)="guardar()">Guardar borrador</button>
+          <button matButton="filled" class="btn-primary" [disabled]="!valido" (click)="enviar()">Enviar</button>
+        }
+      </div>
+    </div>
+  } @else {
+    <p class="pv-hint-text">No se encontró el correo solicitado.</p>
+    <button matButton="outlined" (click)="cancelar()">Volver</button>
+  }
+</div>

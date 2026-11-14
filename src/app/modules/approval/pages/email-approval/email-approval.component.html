@@ -1,45 +1,47 @@
 <div class="pv-page">
   <div class="pv-title-row">
-    <h4 class="pv-page-title">Aprobación de correo</h4>
+    <h4 class="pv-page-title">Aprobacion de Mensaje</h4>
   </div>
-  <p class="pv-section-subtitle approval-intro">Borradores generados por IA. Nada se envía sin aprobación humana.</p>
+  <p class="pv-section-subtitle approval-intro">Borradores generados por IA pendientes de tu aprobación. Nada se envía sin aprobación humana.</p>
 
-  @if (borradores().length === 0) {
-    <p class="pv-hint-text">No hay borradores pendientes.</p>
-  }
+  <table mat-table [dataSource]="pendientes()" class="pv-table-full mat-elevation-z1">
+    <ng-container matColumnDef="numeroContainer">
+      <th mat-header-cell *matHeaderCellDef>Contenedor</th>
+      <td mat-cell *matCellDef="let b">{{ b.numeroContainer }}</td>
+    </ng-container>
 
-  @for (borrador of borradores(); track borrador.idAlerta) {
-    <div class="pv-box pv-section approval-card">
-      <div class="approval-header">
-        <span class="pv-section-title">{{ borrador.numeroContainer }}</span>
-        <app-chip [color]="colorEstado(borrador.estado)">{{ borrador.estado }}</app-chip>
-      </div>
+    <ng-container matColumnDef="canal">
+      <th mat-header-cell *matHeaderCellDef>Tipo de canal</th>
+      <td mat-cell *matCellDef="let b">{{ b.canal }}</td>
+    </ng-container>
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
-        <mat-label>Destinatario</mat-label>
-        <input matInput [value]="borrador.destinatario" disabled />
-      </mat-form-field>
+    <ng-container matColumnDef="asunto">
+      <th mat-header-cell *matHeaderCellDef>Asunto</th>
+      <td mat-cell *matCellDef="let b">{{ b.asunto }}</td>
+    </ng-container>
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
-        <mat-label>Asunto</mat-label>
-        <input matInput [ngModel]="borrador.asunto"
-               [disabled]="borrador.estado !== 'PENDIENTE_APROBACION'"
-               (ngModelChange)="actualizar(borrador.idAlerta, $event, borrador.contenido)" />
-      </mat-form-field>
+    <ng-container matColumnDef="destinatario">
+      <th mat-header-cell *matHeaderCellDef>Destinatario</th>
+      <td mat-cell *matCellDef="let b">{{ b.destinatario }}</td>
+    </ng-container>
 
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-full-width">
-        <mat-label>Contenido</mat-label>
-        <textarea matInput rows="8" [ngModel]="borrador.contenido"
-                  [disabled]="borrador.estado !== 'PENDIENTE_APROBACION'"
-                  (ngModelChange)="actualizar(borrador.idAlerta, borrador.asunto, $event)"></textarea>
-      </mat-form-field>
+    <ng-container matColumnDef="createAt">
+      <th mat-header-cell *matHeaderCellDef>Creado</th>
+      <td mat-cell *matCellDef="let b">{{ b.createAt | date: 'dd-MM-yyyy HH:mm' }}</td>
+    </ng-container>
 
-      @if (borrador.estado === 'PENDIENTE_APROBACION') {
-        <div class="pv-form-actions">
-          <button matButton="outlined" (click)="rechazar(borrador.idAlerta)">Rechazar</button>
-          <button matButton="filled" class="btn-primary" (click)="aprobar(borrador.idAlerta)">Aprobar y enviar</button>
-        </div>
-      }
-    </div>
-  }
+    <ng-container matColumnDef="estado">
+      <th mat-header-cell *matHeaderCellDef>Estado</th>
+      <td mat-cell *matCellDef="let b"><app-chip color="warning">Pendiente de aprobación</app-chip></td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas"
+        class="approval-row"
+        [routerLink]="['/aprobacion-correo', row.idLogNotificacion]"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">No hay correos pendientes de aprobación.</td>
+    </tr>
+  </table>
 </div>
