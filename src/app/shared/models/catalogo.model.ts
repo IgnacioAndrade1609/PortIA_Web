@@ -7,6 +7,13 @@ export interface Naviera {
   vigente: boolean;
 }
 
+export interface NavieraRequest {
+  nombreNaviera: string;
+  codigoNaviera: string | null;
+  email: string | null;
+  telefono: string | null;
+}
+
 export interface Terminal {
   id: number;
   codigoTerminal: string;
