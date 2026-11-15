@@ -1,0 +1,31 @@
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: .5rem;
+}
+
+.alerta-no-leida td {
+  font-weight: 600;
+}
+
+.alerta-no-leida td:first-child {
+  box-shadow: inset 3px 0 0 var(--brand-primary);
+}
+
+.alerta-leida td {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.estado-lectura {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.estado-lectura mat-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

@@ -13,6 +13,13 @@ export class TeamDocumentsService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = `${environment.apiUrl}/teams`;
 
+  getDocumentsTodos(filter: TeamDocumentsFilter = {}): Observable<AnalystDocument[]> {
+    let params = new HttpParams();
+    if (filter.analystId != null) params = params.set('analystId', filter.analystId);
+
+    return this.http.get<AnalystDocument[]>(`${this.baseUrl}/all/documents`, { params });
+  }
+
   getDocuments(jefeId: number, filter: TeamDocumentsFilter = {}): Observable<AnalystDocument[]> {
     let params = new HttpParams();
     if (filter.analystId != null) params = params.set('analystId', filter.analystId);

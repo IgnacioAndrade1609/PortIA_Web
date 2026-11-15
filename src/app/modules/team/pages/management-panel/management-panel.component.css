@@ -71,9 +71,11 @@
   margin-bottom: 24px;
 }
 
-.active-preset {
+.pv-btn-group button.active-preset {
   background-color: var(--brand-primary);
-  color: #ffffff;
+  color: var(--mat-sys-on-primary) !important;
+  --mat-button-outlined-label-text-color: var(--mat-sys-on-primary);
+  --mdc-outlined-button-label-text-color: var(--mat-sys-on-primary);
 }
 
 .segmented-bar {
@@ -116,4 +118,105 @@
   height: 10px;
   border-radius: 2px;
   flex-shrink: 0;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.kpi-card:hover {
+  background-color: var(--mat-sys-surface-container);
+}
+
+.kpi-card--static {
+  cursor: default;
+}
+
+.kpi-card--static:hover {
+  background-color: transparent;
+}
+
+.kpi-label {
+  font-size: var(--pv-font-size-base);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.kpi-value {
+  font-size: var(--pv-font-size-xl);
+  font-weight: 500;
+}
+
+.kpi-value--danger {
+  color: var(--pv-chip-danger-fg);
+}
+
+.kpi-sub {
+  font-size: var(--pv-font-size-sm);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.delta--good {
+  color: var(--pv-chip-success-fg);
+}
+
+.delta--bad {
+  color: var(--pv-chip-danger-fg);
+}
+
+.delta--neutral {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.costo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.costo-nota {
+  grid-column: 1 / -1;
+  margin: 0;
+  font-size: var(--pv-font-size-sm);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.fila-clicable {
+  cursor: pointer;
+}
+
+.fila-clicable:hover {
+  background-color: var(--mat-sys-surface-container);
+}
+
+button.segmented-bar__block {
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pv-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.pv-section-title {
+  margin-top: 24px;
 }

@@ -10,10 +10,16 @@ export class TeamDashboardService {
   private readonly baseUrl = `${environment.apiUrl}/teams`;
 
   getDashboard(jefeId: number, fromDate: Date, toDate: Date): Observable<TeamDashboardResponse> {
-    const params = new HttpParams()
+    return this.http.get<TeamDashboardResponse>(`${this.baseUrl}/${jefeId}/dashboard`, { params: this.rango(fromDate, toDate) });
+  }
+
+  getDashboardTodos(fromDate: Date, toDate: Date): Observable<TeamDashboardResponse> {
+    return this.http.get<TeamDashboardResponse>(`${this.baseUrl}/all/dashboard`, { params: this.rango(fromDate, toDate) });
+  }
+
+  private rango(fromDate: Date, toDate: Date): HttpParams {
+    return new HttpParams()
       .set('fromDate', fromDate.toISOString())
       .set('toDate', toDate.toISOString());
-
-    return this.http.get<TeamDashboardResponse>(`${this.baseUrl}/${jefeId}/dashboard`, { params });
   }
 }

@@ -1,10 +1,10 @@
-:host ::ng-deep .notifications-panel {
-  width: 380px;
-  max-width: 90vw;
+::ng-deep .mat-mdc-menu-panel.notifications-panel {
+  width: 440px;
+  max-width: 92vw;
 }
 
 .notifications-header {
-  padding: 8px 16px;
+  padding: 10px 20px;
   font-weight: 600;
   cursor: default;
 }
@@ -18,7 +18,7 @@
 .notification-item {
   height: auto !important;
   line-height: normal !important;
-  padding: 8px 16px !important;
+  padding: 10px 20px !important;
 }
 
 .notification-item.no-leida {
@@ -28,7 +28,7 @@
 .notification-row {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: 14px;
   width: 100%;
 }
 

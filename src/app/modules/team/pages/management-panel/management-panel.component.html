@@ -1,13 +1,23 @@
 <div class="pv-page">
   <div class="pv-title-row">
     <h4 class="pv-page-title">Panel de gestión</h4>
+    <span class="pv-spacer"></span>
+    <div class="pv-btn-group no-print">
+      <button matButton="outlined" (click)="exportar()">
+        <mat-icon>file_download</mat-icon>Exportar resumen
+      </button>
+      <button matButton="outlined" (click)="imprimir()">
+        <mat-icon>print</mat-icon>Imprimir
+      </button>
+    </div>
   </div>
 
   @if (esAdmin()) {
-    <div class="pv-actions-row">
+    <div class="pv-actions-row no-print">
       <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
         <mat-label>Jefe</mat-label>
         <mat-select [value]="jefeSeleccionado()" (selectionChange)="seleccionarJefe($event.value)">
+          <mat-option [value]="todosLosEquipos">Todos los equipos</mat-option>
           @for (jefe of jefes(); track jefe.id) {
             <mat-option [value]="jefe.id">{{ jefe.name }}</mat-option>
           }
@@ -17,9 +27,9 @@
   }
 
   @if (esAdmin() && jefeSeleccionado() == null) {
-    <p class="pv-hint-text">Selecciona un jefe para ver el panel de su equipo.</p>
+    <p class="pv-hint-text">Selecciona un jefe o "Todos los equipos" para ver el panel.</p>
   } @else {
-    <div class="pv-toolbar-row">
+    <div class="pv-toolbar-row no-print">
       <div class="pv-btn-group">
         <button mat-stroked-button [class.active-preset]="preset() === 7" (click)="seleccionarPreset(7)">7 días</button>
         <button mat-stroked-button [class.active-preset]="preset() === 30" (click)="seleccionarPreset(30)">30 días</button>
@@ -49,29 +59,85 @@
       <p class="login-error">{{ error() }}</p>
     }
 
-    <div class="pv-box pv-section resumen-grid">
-      <div class="detail-col">
-        <div class="detail-label">Contenedores del equipo</div>
-        <div class="detail-value">{{ totalContenedores() }}</div>
+    <div class="kpi-grid">
+      <button type="button" class="kpi-card" (click)="verContenedores()">
+        <span class="kpi-label">Contenedores del equipo (hoy)</span>
+        <span class="kpi-value">{{ totalContenedores() }}</span>
+        <span class="kpi-sub">{{ enRiesgoPct() }}% en riesgo</span>
+      </button>
+
+      <button type="button" class="kpi-card" (click)="verContenedores('OVERDUE')">
+        <span class="kpi-label">Contenedores vencidos (hoy)</span>
+        <span class="kpi-value" [class.kpi-value--danger]="vencidos() > 0">{{ vencidos() }}</span>
+        <span class="kpi-sub">Ver el detalle</span>
+      </button>
+
+      <button type="button" class="kpi-card" (click)="verAlertas()">
+        <span class="kpi-label">Alertas generadas en el período</span>
+        <span class="kpi-value">{{ alertasGeneradas() }}</span>
+        @if (deltaAlertas(); as d) {
+          <span class="kpi-sub delta--{{ d.clase }}">{{ d.texto }}</span>
+        } @else {
+          <span class="kpi-sub">{{ alertasPendientes() }} pendientes</span>
+        }
+      </button>
+
+      <div class="kpi-card kpi-card--static">
+        <span class="kpi-label">Alertas gestionadas</span>
+        <span class="kpi-value">{{ gestionadasPct() != null ? gestionadasPct() + '%' : 'Sin datos' }}</span>
+        @if (deltaGestionadas(); as d) {
+          <span class="kpi-sub delta--{{ d.clase }}">{{ d.texto }}</span>
+        } @else {
+          <span class="kpi-sub">{{ alertasPendientes() }} pendientes de gestionar</span>
+        }
       </div>
-      <div class="detail-col">
-        <div class="detail-label">Tiempo promedio de reacción (alertas críticas)</div>
-        <div class="detail-value">{{ reaccionLabel() }}</div>
+
+      <div class="kpi-card kpi-card--static">
+        <span class="kpi-label">Tiempo de reacción (alertas críticas)</span>
+        <span class="kpi-value">{{ reaccionLabel() }}</span>
+        @if (deltaReaccion(); as d) {
+          <span class="kpi-sub delta--{{ d.clase }}">{{ d.texto }}</span>
+        } @else if (dashboard()?.avgReactionTimeCriticalMinutes == null) {
+          <span class="kpi-sub">Aún no hay alertas críticas gestionadas en el período</span>
+        }
       </div>
     </div>
 
-    <div class="pv-section-title">Contenedores por nivel de riesgo</div>
-    <div class="pv-box">
+    <div class="pv-section-title">Costo estimado de retrasos (aproximado)</div>
+    <div class="pv-box pv-section costo-grid">
+      <div class="detail-col">
+        <div class="detail-label">Acumulado por contenedores vencidos</div>
+        <div class="detail-value" [class.detail-value--error]="costoAcumulado().usd > 0">
+          USD {{ costoAcumulado().usd | number: '1.0-0' }}
+        </div>
+        <div class="detail-label">{{ costoAcumulado().dias }} días de atraso en total</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Costo adicional por día si no se actúa</div>
+        <div class="detail-value" [class.detail-value--warning]="costoDiarioEnJuego().usd > 0">
+          USD {{ costoDiarioEnJuego().usd | number: '1.0-0' }} / día
+        </div>
+        <div class="detail-label">{{ costoDiarioEnJuego().contenedores }} contenedores críticos o vencidos</div>
+      </div>
+      <p class="costo-nota">
+        Es un valor aproximado. Se calcula con una tarifa supuesta de USD {{ tarifaDiariaUsd }} por contenedor por día
+        de atraso, no con la tarifa real de cada naviera ni de cada terminal.
+      </p>
+    </div>
+
+    <div class="pv-section-title">Contenedores por nivel de riesgo (hoy)</div>
+    <div class="pv-box pv-section">
       @if (riskSegments().length > 0) {
         <div class="segmented-bar" role="img" [attr.aria-label]="'Contenedores por nivel de riesgo: ' + riskSegments().map(s => s.label + ' ' + s.count).join(', ')">
           @for (seg of riskSegments(); track seg.level) {
-            <div class="segmented-bar__block"
+            <button type="button" class="segmented-bar__block"
                  [style.width.%]="seg.pct"
                  [style.background-color]="seg.color"
                  [style.color]="seg.textColor"
-                 [title]="seg.label + ': ' + seg.count">
+                 [title]="seg.label + ': ' + seg.count + '. Clic para ver el detalle'"
+                 (click)="verContenedores(seg.level)">
               @if (seg.showLabel) { {{ seg.count }} }
-            </div>
+            </button>
           }
         </div>
         <div class="segmented-bar__legend">
@@ -87,18 +153,76 @@
       }
     </div>
 
-    <div class="pv-section-title">Alertas generadas y gestionadas por analista</div>
+    <div class="pv-section-title">Desempeño por analista</div>
+    <table mat-table [dataSource]="filasAnalistas()" class="pv-table-full mat-elevation-z1 pv-section">
+      <ng-container matColumnDef="nombre">
+        <th mat-header-cell *matHeaderCellDef>Analista</th>
+        <td mat-cell *matCellDef="let f">{{ f.nombre }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="contenedores">
+        <th mat-header-cell *matHeaderCellDef>Contenedores asignados</th>
+        <td mat-cell *matCellDef="let f">{{ f.contenedores }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="advertencia">
+        <th mat-header-cell *matHeaderCellDef>En advertencia</th>
+        <td mat-cell *matCellDef="let f">{{ f.advertencia }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="criticosVencidos">
+        <th mat-header-cell *matHeaderCellDef>Críticos y vencidos</th>
+        <td mat-cell *matCellDef="let f">
+          <span [class.detail-value--error]="f.criticosVencidos > 0">{{ f.criticosVencidos }}</span>
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="alertas">
+        <th mat-header-cell *matHeaderCellDef>Alertas en el período</th>
+        <td mat-cell *matCellDef="let f">{{ f.alertas }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="gestionadasPct">
+        <th mat-header-cell *matHeaderCellDef>Alertas gestionadas</th>
+        <td mat-cell *matCellDef="let f">{{ f.gestionadasPct != null ? f.gestionadasPct + '%' : '—' }}</td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnasAnalistas"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnasAnalistas"
+          class="fila-clicable"
+          matTooltip="Ver los contenedores de este analista"
+          (click)="verContenedores(undefined, row.id)"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnasAnalistas.length">Este equipo no tiene analistas asignados.</td>
+      </tr>
+    </table>
+
+    <div class="pv-section-title">Alertas generadas por día y nivel de riesgo</div>
     <div class="pv-box chart-box">
-      @if ((dashboard()?.alertsByAnalyst?.length ?? 0) > 0) {
-        <canvas baseChart [data]="alertsChartData()" [options]="alertsChartOptions()" type="bar"></canvas>
-      } @else {
-        <p class="pv-hint-text">Este equipo no tiene analistas asignados.</p>
-      }
+      <canvas baseChart [data]="tendenciaChartData()" [options]="tendenciaChartOptions()" type="bar"></canvas>
     </div>
 
-    <div class="pv-section-title">Documentos cargados por período</div>
-    <div class="pv-box chart-box">
-      <canvas baseChart [data]="documentsChartData()" [options]="documentsChartOptions()" type="line"></canvas>
+    <div class="pv-section-title">Calidad de la extracción con IA</div>
+    <div class="pv-box pv-section resumen-grid">
+      <div class="detail-col">
+        <div class="detail-label">Documentos cargados en el período</div>
+        <div class="detail-value">{{ documentosPeriodo().length }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Confianza media de la IA</div>
+        <div class="detail-value">{{ confianzaMedia() != null ? confianzaMedia() + '%' : 'Sin datos' }}</div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Documentos por revisar</div>
+        <div class="detail-value" [class.detail-value--warning]="(porRevisarPct() ?? 0) > 0">
+          {{ porRevisarPct() != null ? porRevisarPct() + '%' : 'Sin datos' }}
+        </div>
+      </div>
+      <div class="detail-col">
+        <div class="detail-label">Con confianza baja (menos de 80%)</div>
+        <div class="detail-value" [class.detail-value--warning]="confianzaBajaCount() > 0">{{ confianzaBajaCount() }}</div>
+      </div>
     </div>
   }
 </div>

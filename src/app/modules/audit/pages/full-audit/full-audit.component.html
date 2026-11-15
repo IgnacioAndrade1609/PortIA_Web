@@ -1,92 +1,237 @@
 <div class="pv-page">
   <div class="pv-title-row">
     <h4 class="pv-page-title">Auditoría completa</h4>
-  </div>
-  <p class="pv-section-subtitle" style="margin-top: -12px; margin-bottom: 16px;">Registro de todas las acciones del sistema (LOG_AUDITORIA).</p>
-
-  <form [formGroup]="filterForm" class="pv-toolbar-row">
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field-wide">
-      <mat-label>Entidad</mat-label>
-      <input matInput formControlName="nombreEntidad" placeholder="Ej: Container, Usuario, Documento" />
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field">
-      <mat-label>Acción</mat-label>
-      <mat-select formControlName="accion">
-        <mat-option [value]="null">Todas</mat-option>
-        <mat-option value="CREAR">Crear</mat-option>
-        <mat-option value="ACTUALIZAR">Actualizar</mat-option>
-        <mat-option value="LEER">Leer</mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field">
-      <mat-label>Desde</mat-label>
-      <input matInput [matDatepicker]="pickerDesde" formControlName="fromDate" />
-      <mat-datepicker-toggle matIconSuffix [for]="pickerDesde"></mat-datepicker-toggle>
-      <mat-datepicker #pickerDesde></mat-datepicker>
-    </mat-form-field>
-
-    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field">
-      <mat-label>Hasta</mat-label>
-      <input matInput [matDatepicker]="pickerHasta" formControlName="toDate" />
-      <mat-datepicker-toggle matIconSuffix [for]="pickerHasta"></mat-datepicker-toggle>
-      <mat-datepicker #pickerHasta></mat-datepicker>
-    </mat-form-field>
-
     <span class="pv-spacer"></span>
-
-    <div class="pv-filter-actions">
-      <button mat-stroked-button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
+    <div class="pv-btn-group no-print">
+      <button matButton="outlined" (click)="exportar()">
+        <mat-icon>file_download</mat-icon>Exportar a Excel
+      </button>
     </div>
-  </form>
-
-  <div class="pv-table-container">
-    <table mat-table [dataSource]="logs()" class="pv-table-full mat-elevation-z1">
-      <ng-container matColumnDef="createAt">
-        <th mat-header-cell *matHeaderCellDef>Fecha</th>
-        <td mat-cell *matCellDef="let log">{{ log.createAt | date: 'dd-MM-yyyy HH:mm' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="nombreEntidad">
-        <th mat-header-cell *matHeaderCellDef>Entidad</th>
-        <td mat-cell *matCellDef="let log">{{ log.nombreEntidad }} #{{ log.idEntidad }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="accion">
-        <th mat-header-cell *matHeaderCellDef>Acción</th>
-        <td mat-cell *matCellDef="let log">{{ log.accion }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="responsable">
-        <th mat-header-cell *matHeaderCellDef>Responsable</th>
-        <td mat-cell *matCellDef="let log">{{ log.responsableNombre ?? 'Sistema' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="valoresAnteriores">
-        <th mat-header-cell *matHeaderCellDef>Valor anterior</th>
-        <td mat-cell *matCellDef="let log">{{ log.valoresAnteriores ?? '—' }}</td>
-      </ng-container>
-
-      <ng-container matColumnDef="valoresNuevos">
-        <th mat-header-cell *matHeaderCellDef>Valor nuevo</th>
-        <td mat-cell *matCellDef="let log">{{ log.valoresNuevos ?? '—' }}</td>
-      </ng-container>
-
-      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
-      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
-
-      <tr class="mat-row" *matNoDataRow>
-        <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">Sin registros</td>
-      </tr>
-    </table>
-
-    <mat-paginator
-      [length]="totalItems()"
-      [pageIndex]="pageIndex()"
-      [pageSize]="pageSize()"
-      [pageSizeOptions]="[25, 50, 100]"
-      (page)="onPageChange($event)">
-    </mat-paginator>
   </div>
+  <p class="pv-section-subtitle auditoria-subtitulo">Quién hizo qué y cuándo, incluyendo lo que hace el sistema por su cuenta.</p>
+
+  <div class="kpi-grid no-print">
+    <div class="kpi-card kpi-card--static">
+      <span class="kpi-label">Eventos en el período</span>
+      <span class="kpi-value">{{ resumen()?.totalEventos ?? '—' }}</span>
+      @if (resumen()?.resultadoTruncado) {
+        <span class="kpi-sub">Se muestran los 5.000 más recientes</span>
+      }
+    </div>
+    <div class="kpi-card kpi-card--static">
+      <span class="kpi-label">Usuarios activos</span>
+      <span class="kpi-value">{{ resumen()?.usuariosActivos ?? '—' }}</span>
+      <span class="kpi-sub">Con al menos una acción</span>
+    </div>
+    <div class="kpi-card kpi-card--static">
+      <span class="kpi-label">Acciones del sistema</span>
+      <span class="kpi-value">{{ resumen()?.eventosDeSistema ?? '—' }}</span>
+      <span class="kpi-sub">Sin una persona responsable</span>
+    </div>
+    <button type="button" class="kpi-card" (click)="filtrarSensibles()">
+      <span class="kpi-label">Acciones sensibles</span>
+      <span class="kpi-value" [class.kpi-value--warning]="(resumen()?.accionesSensibles ?? 0) > 0">{{ resumen()?.accionesSensibles ?? '—' }}</span>
+      <span class="kpi-sub">Clic para verlas</span>
+    </button>
+  </div>
+
+  @if ((resumen()?.sensiblesPorTipo?.length ?? 0) > 0) {
+    <div class="sensibles-lista no-print">
+      @for (s of resumen()!.sensiblesPorTipo; track s.tipo) {
+        <app-chip color="warning">{{ etiquetasSensibilidad[s.tipo] }}: {{ s.cantidad }}</app-chip>
+      }
+    </div>
+  }
+
+  <div class="rangos no-print">
+    <button matButton="outlined" [class.rango-activo]="rango() === 'HOY'" (click)="aplicarRango('HOY')">Hoy</button>
+    <button matButton="outlined" [class.rango-activo]="rango() === '7'" (click)="aplicarRango('7')">7 días</button>
+    <button matButton="outlined" [class.rango-activo]="rango() === '30'" (click)="aplicarRango('30')">30 días</button>
+    <button matButton="outlined" [class.rango-activo]="rango() === 'MES'" (click)="aplicarRango('MES')">Este mes</button>
+    <button matButton="outlined" [class.rango-activo]="rango() === 'TODO'" (click)="aplicarRango('TODO')">Todo</button>
+  </div>
+
+  <div class="pv-section no-print">
+    <form (submit)="$event.preventDefault()">
+      <div class="pv-form-row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Usuario</mat-label>
+          <mat-select [value]="responsableId()" (selectionChange)="responsableId.set($event.value); recargar()">
+            <mat-option [value]="null">Todos</mat-option>
+            @for (u of usuarios(); track u.id) {
+              <mat-option [value]="u.id">{{ u.name }} ({{ u.role.name }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+          <mat-label>Origen</mat-label>
+          <mat-select [value]="origen()" (selectionChange)="origen.set($event.value); recargar()">
+            <mat-option value="TODOS">Todos</mat-option>
+            <mat-option value="USUARIO">Personas</mat-option>
+            <mat-option value="SISTEMA">Sistema</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Tipo de registro</mat-label>
+          <mat-select [value]="entidad()" (selectionChange)="entidad.set($event.value); recargar()">
+            <mat-option value="TODAS">Todos</mat-option>
+            @for (e of entidades; track e.valor) {
+              <mat-option [value]="e.valor">{{ e.etiqueta }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+          <mat-label>Acción</mat-label>
+          <mat-select [value]="accion()" (selectionChange)="accion.set($event.value); recargar()">
+            <mat-option value="TODAS">Todas</mat-option>
+            <mat-option value="CREAR">Crear</mat-option>
+            <mat-option value="ACTUALIZAR">Actualizar</mat-option>
+            <mat-option value="LEER">Leer</mat-option>
+          </mat-select>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+          <mat-label>N° Contenedor</mat-label>
+          <input matInput [value]="contenedor()" (input)="contenedor.set($any($event.target).value)" (change)="recargar()" />
+        </mat-form-field>
+      </div>
+
+      <div class="pv-form-row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Desde</mat-label>
+          <input matInput type="date" [value]="desde()" (change)="cambiarFecha('desde', $any($event.target).value)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Hasta</mat-label>
+          <input matInput type="date" [value]="hasta()" (change)="cambiarFecha('hasta', $any($event.target).value)" />
+        </mat-form-field>
+
+        <div class="pv-col-4 filtros-extra">
+          <button matButton="outlined" [class.rango-activo]="soloSensibles()" (click)="soloSensibles.set(!soloSensibles()); recargar()">
+            <mat-icon>flag</mat-icon>Solo acciones sensibles
+          </button>
+        </div>
+
+        <div class="pv-col-2 filter-actions">
+          <button type="button" matIconButton class="btn-icon-dark" matTooltip="Limpiar filtros" (click)="limpiar()">
+            <mat-icon>filter_alt_off</mat-icon>
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <table mat-table [dataSource]="eventos()" class="pv-table-full mat-elevation-z1">
+    <ng-container matColumnDef="fecha">
+      <th mat-header-cell *matHeaderCellDef>Fecha</th>
+      <td mat-cell *matCellDef="let e" class="celda-fecha">{{ e.fecha | date: 'dd-MM-yyyy HH:mm' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="responsable">
+      <th mat-header-cell *matHeaderCellDef>Responsable</th>
+      <td mat-cell *matCellDef="let e" class="celda-superior">
+        @if (e.responsableNombre) {
+          <a class="enlace-filtro" matTooltip="Ver solo las acciones de esta persona" (click)="filtrarPorUsuario(e.responsableId)">{{ e.responsableNombre }}</a>
+        } @else {
+          <app-chip color="neutral">Sistema</app-chip>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="detalle">
+      <th mat-header-cell *matHeaderCellDef>Qué pasó</th>
+      <td mat-cell *matCellDef="let e" class="celda-detalle">
+        <div class="evento-titulo">
+          {{ e.titulo }}
+          <button type="button" matIconButton class="btn-tecnico" matTooltip="Ver datos técnicos" (click)="alternarTecnico(e.id)">
+            <mat-icon>{{ expandidos().has(e.id) ? 'expand_less' : 'data_object' }}</mat-icon>
+          </button>
+        </div>
+
+        @for (c of e.cambios; track c.campo) {
+          <div class="evento-cambio">
+            <span class="cambio-campo">{{ c.campo }}:</span>
+            <span class="cambio-antes">{{ c.antes }}</span>
+            <mat-icon class="cambio-flecha">arrow_forward</mat-icon>
+            <span class="cambio-despues">{{ c.despues }}</span>
+          </div>
+        }
+
+        @if (expandidos().has(e.id)) {
+          <div class="tecnico-panel">
+            @if (e.filasTecnicas.length > 0) {
+              <table class="tecnico-tabla">
+                <thead>
+                  <tr><th>Campo</th><th>Antes</th><th>Después</th></tr>
+                </thead>
+                <tbody>
+                  @for (f of e.filasTecnicas; track f.clave) {
+                    <tr [class.tecnico-cambio]="f.cambio">
+                      <td>{{ f.clave }}</td>
+                      <td>{{ f.antes }}</td>
+                      <td>{{ f.despues }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+            <div class="tecnico-acciones">
+              @if (e.jsonAnterior) {
+                <button matButton="outlined" (click)="copiar(e.jsonAnterior)">
+                  <mat-icon>content_copy</mat-icon>Copiar JSON anterior
+                </button>
+              }
+              <button matButton="outlined" (click)="copiar(e.jsonNuevo || e.tecnico)">
+                <mat-icon>content_copy</mat-icon>Copiar JSON nuevo
+              </button>
+            </div>
+          </div>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="contenedor">
+      <th mat-header-cell *matHeaderCellDef>Contenedor</th>
+      <td mat-cell *matCellDef="let e" class="celda-superior">
+        @if (e.contenedorNumero) {
+          <a class="enlace-filtro" matTooltip="Ver todo el historial de este contenedor" (click)="filtrarPorContenedor(e.contenedorNumero)">{{ e.contenedorNumero }}</a>
+          <a matIconButton class="btn-tecnico" [routerLink]="['/contenedores', e.contenedorId]" matTooltip="Abrir el contenedor">
+            <mat-icon>open_in_new</mat-icon>
+          </a>
+        } @else {
+          —
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="sensibilidad">
+      <th mat-header-cell *matHeaderCellDef>Sensible</th>
+      <td mat-cell *matCellDef="let e" class="celda-superior">
+        @if (e.sensibilidadEtiqueta) {
+          <app-chip color="warning">{{ e.sensibilidadEtiqueta }}</app-chip>
+        }
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas" [class.fila-sensible]="row.sensibilidad"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">
+        {{ cargando() ? 'Cargando...' : 'No hay registros con estos filtros.' }}
+      </td>
+    </tr>
+  </table>
+
+  <mat-paginator
+    [length]="totalItems()"
+    [pageIndex]="pageIndex()"
+    [pageSize]="pageSize()"
+    [pageSizeOptions]="[25, 50, 100]"
+    (page)="onPageChange($event)">
+  </mat-paginator>
 </div>

@@ -18,7 +18,7 @@ export interface BackendContainer {
   demurrageDeadline: string | null;
   detentionDeadline: string | null;
   riskLevel: NivelRiesgo | null;
-  hoursToDeadline: number;
+  hoursToDeadline: number | null;
   needsReview: boolean;
   managed: boolean;
   portStatus: string | null;
@@ -52,6 +52,7 @@ export interface ContainerListItem {
   deadlineDetention: string | null;
   estadoPuerto: string | null;
   nivelRiesgo: NivelRiesgo;
+  horasParaDeadline: number | null;
   asignadoA?: string;
 }
 

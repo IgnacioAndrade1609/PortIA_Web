@@ -33,7 +33,8 @@
       </mat-form-field>
 
       <div class="pv-form-actions">
-        <button matButton="outlined" (click)="cancelar()" [disabled]="enviando()">Cancelar</button>
+        <button matButton="outlined" (click)="cancelar()" [disabled]="enviando()">Volver</button>
+        <button matButton="outlined" (click)="rechazar()" [disabled]="enviando()">Rechazar</button>
         <!-- Botón de guardar borrador eliminado -->
         <button matButton="filled" class="btn-primary" [disabled]="!valido || enviando()" (click)="enviar()">
           {{ enviando() ? 'Enviando...' : 'Enviar' }}

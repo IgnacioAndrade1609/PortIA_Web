@@ -85,6 +85,29 @@ export class EmailDetailComponent implements OnInit {
     });
   }
 
+  rechazar(): void {
+    const det = this.detalle();
+    if (!det || this.enviando()) return;
+
+    const confirmado = window.confirm(`¿Rechazar el mensaje por ${det.nombreCanal} del contenedor ${det.contenedor}? Quedará registrado como rechazado y no se enviará.`);
+    if (!confirmado) return;
+
+    this.enviando.set(true);
+
+    this.notificationService.rechazar(this.id(), det.tipoCanal).subscribe({
+      next: () => {
+        this.snackBar.open('Mensaje rechazado. Quedó registrado en el historial.', 'Cerrar', { duration: 3500 });
+        this.enviando.set(false);
+        this.volver();
+      },
+      error: (err) => {
+        const mensajeError = err?.error?.detail || 'No se pudo rechazar el mensaje.';
+        this.snackBar.open(mensajeError, 'Cerrar', { duration: 5000 });
+        this.enviando.set(false);
+      }
+    });
+  }
+
   private volver(): void {
     this.router.navigate(['/aprobacion-correo']);
   }

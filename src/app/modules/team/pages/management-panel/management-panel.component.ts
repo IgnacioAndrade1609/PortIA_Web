@@ -1,11 +1,14 @@
 import { Component, OnInit, computed, effect, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { DecimalPipe } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatInputModule } from '@angular/material/input';
+import { MatTableModule } from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { FormsModule } from '@angular/forms';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration } from 'chart.js';
@@ -13,11 +16,19 @@ import { ContainerService } from '../../../../shared/services/container.service'
 import { UserService } from '../../../../shared/services/user.service';
 import { AuthService } from '../../../../core/services/auth.service';
 import { ThemeService } from '../../../../core/services/theme.service';
+import { AlertService } from '../../../../shared/services/alert.service';
 import { TeamDashboardService } from '../../../../shared/services/team-dashboard.service';
+import { TeamDocumentsService } from '../../../../shared/services/team-documents.service';
 import { TeamDashboardResponse } from '../../../../shared/models/team-dashboard.model';
+import { ContainerListItem } from '../../../../shared/models/container.model';
+import { AnalystDocument } from '../../../../shared/models/analyst-document.model';
 import { UserDto } from '../../../../shared/models/usuario.model';
+import { exportToExcelHojas } from '../../../../shared/utils/excel-export.util';
 
 type Preset = 7 | 30 | 90 | 'custom';
+
+const TARIFA_DIARIA_USD = 150;
+const TODOS_LOS_EQUIPOS = -1;
 
 const COLORS = {
   light: {
@@ -46,12 +57,40 @@ export interface RiskSegment {
   showLabel: boolean;
 }
 
+export interface Delta {
+  texto: string;
+  clase: 'good' | 'bad' | 'neutral';
+}
+
+export interface AnalystRow {
+  id: number | null;
+  nombre: string;
+  contenedores: number;
+  advertencia: number;
+  criticosVencidos: number;
+  alertas: number;
+  gestionadasPct: number | null;
+}
+
 const LABEL_MIN_PCT = 8;
+
+function calcularDelta(actual: number | null, previo: number | null, menorEsMejor: boolean, sufijo = ''): Delta | null {
+  if (actual == null || previo == null) return null;
+  const diff = Math.round((actual - previo) * 10) / 10;
+  if (diff === 0) return { texto: 'Sin cambios vs. período anterior', clase: 'neutral' };
+  const sube = diff > 0;
+  const bueno = menorEsMejor ? !sube : sube;
+  return {
+    texto: `${sube ? '▲ +' : '▼ '}${diff}${sufijo} vs. período anterior`,
+    clase: bueno ? 'good' : 'bad'
+  };
+}
 
 @Component({
   selector: 'app-management-panel',
   standalone: true,
   imports: [
+    DecimalPipe,
     FormsModule,
     MatIconModule,
     MatFormFieldModule,
@@ -59,6 +98,8 @@ const LABEL_MIN_PCT = 8;
     MatButtonModule,
     MatDatepickerModule,
     MatInputModule,
+    MatTableModule,
+    MatTooltipModule,
     BaseChartDirective
   ],
   templateUrl: './management-panel.component.html',
@@ -66,17 +107,23 @@ const LABEL_MIN_PCT = 8;
 })
 export class ManagementPanelComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly containerService = inject(ContainerService);
   private readonly userService = inject(UserService);
   private readonly auth = inject(AuthService);
   private readonly theme = inject(ThemeService);
+  private readonly alertService = inject(AlertService);
   private readonly teamDashboardService = inject(TeamDashboardService);
+  private readonly teamDocumentsService = inject(TeamDocumentsService);
+
+  readonly tarifaDiariaUsd = TARIFA_DIARIA_USD;
+  readonly todosLosEquipos = TODOS_LOS_EQUIPOS;
+  readonly columnasAnalistas = ['nombre', 'contenedores', 'advertencia', 'criticosVencidos', 'alertas', 'gestionadasPct'];
 
   readonly esAdmin = computed(() => this.auth.rol() === 'Admin');
   readonly today = new Date();
 
   readonly jefes = signal<UserDto[]>([]);
-
   readonly jefeSeleccionado = signal<number | null>(null);
 
   readonly preset = signal<Preset>(30);
@@ -84,13 +131,64 @@ export class ManagementPanelComponent implements OnInit {
   readonly toDate = signal<Date>(new Date());
 
   readonly dashboard = signal<TeamDashboardResponse | null>(null);
+  readonly dashboardAnterior = signal<TeamDashboardResponse | null>(null);
+  readonly contenedores = signal<ContainerListItem[]>([]);
+  readonly documentos = signal<AnalystDocument[]>([]);
   readonly cargando = signal(false);
   readonly error = signal<string | null>(null);
 
   private readonly colores = computed(() => this.theme.tema() === 'dark' ? COLORS.dark : COLORS.light);
 
+  private contarRiesgo(nivel: string): number {
+    return this.dashboard()?.containersByRisk.find(r => r.riskLevel === nivel)?.count ?? 0;
+  }
+
   readonly totalContenedores = computed(() =>
     this.dashboard()?.containersByRisk.reduce((acc, r) => acc + r.count, 0) ?? 0
+  );
+
+  readonly vencidos = computed(() => this.contarRiesgo('OVERDUE'));
+
+  readonly enRiesgoPct = computed(() => {
+    const total = this.totalContenedores();
+    if (total === 0) return 0;
+    const enRiesgo = this.contarRiesgo('WARNING') + this.contarRiesgo('CRITICAL') + this.contarRiesgo('OVERDUE');
+    return Math.round((enRiesgo / total) * 100);
+  });
+
+  private sumarAlertas(d: TeamDashboardResponse | null): { generadas: number; gestionadas: number } {
+    const lista = d?.alertsByAnalyst ?? [];
+    return {
+      generadas: lista.reduce((acc, a) => acc + a.generated, 0),
+      gestionadas: lista.reduce((acc, a) => acc + a.managed, 0)
+    };
+  }
+
+  private porcentajeGestionadas(d: TeamDashboardResponse | null): number | null {
+    const { generadas, gestionadas } = this.sumarAlertas(d);
+    return generadas === 0 ? null : Math.round((gestionadas / generadas) * 100);
+  }
+
+  readonly alertasGeneradas = computed(() => this.sumarAlertas(this.dashboard()).generadas);
+  readonly gestionadasPct = computed(() => this.porcentajeGestionadas(this.dashboard()));
+  readonly alertasPendientes = computed(() => {
+    const { generadas, gestionadas } = this.sumarAlertas(this.dashboard());
+    return generadas - gestionadas;
+  });
+
+  readonly deltaAlertas = computed(() =>
+    calcularDelta(this.alertasGeneradas(), this.sumarAlertas(this.dashboardAnterior()).generadas, true)
+  );
+  readonly deltaGestionadas = computed(() =>
+    calcularDelta(this.gestionadasPct(), this.porcentajeGestionadas(this.dashboardAnterior()), false, ' pts')
+  );
+  readonly deltaReaccion = computed(() =>
+    calcularDelta(
+      this.dashboard()?.avgReactionTimeCriticalMinutes ?? null,
+      this.dashboardAnterior()?.avgReactionTimeCriticalMinutes ?? null,
+      true,
+      ' min'
+    )
   );
 
   readonly reaccionLabel = computed(() => {
@@ -100,6 +198,75 @@ export class ManagementPanelComponent implements OnInit {
     const horas = Math.floor(minutos / 60);
     const resto = Math.round(minutos % 60);
     return `${horas}h ${resto}m`;
+  });
+
+  readonly documentosPeriodo = computed(() => {
+    const desde = this.fromDate().getTime();
+    const hasta = this.toDate().getTime() + 86400000;
+    return this.documentos().filter(d => {
+      const t = new Date(d.createAt).getTime();
+      return t >= desde && t <= hasta;
+    });
+  });
+
+  readonly confianzaMedia = computed(() => {
+    const con = this.documentosPeriodo().filter(d => d.confidence != null);
+    if (con.length === 0) return null;
+    return Math.round((con.reduce((acc, d) => acc + (d.confidence ?? 0), 0) / con.length) * 100);
+  });
+
+  readonly porRevisarPct = computed(() => {
+    const docs = this.documentosPeriodo();
+    if (docs.length === 0) return null;
+    return Math.round((docs.filter(d => d.estadoExtraccion === 'NEEDS_REVIEW').length / docs.length) * 100);
+  });
+
+  readonly confianzaBajaCount = computed(() =>
+    this.documentosPeriodo().filter(d => d.confidence != null && d.confidence < 0.8).length
+  );
+
+  readonly costoAcumulado = computed(() => {
+    const dias = this.contenedores()
+      .filter(c => c.nivelRiesgo === 'OVERDUE' && c.horasParaDeadline != null && c.horasParaDeadline < 0)
+      .reduce((acc, c) => acc + Math.ceil(Math.abs(c.horasParaDeadline!) / 24), 0);
+    return { dias, usd: dias * TARIFA_DIARIA_USD };
+  });
+
+  readonly costoDiarioEnJuego = computed(() => {
+    const n = this.contenedores().filter(c => c.nivelRiesgo === 'OVERDUE' || c.nivelRiesgo === 'CRITICAL').length;
+    return { contenedores: n, usd: n * TARIFA_DIARIA_USD };
+  });
+
+  readonly filasAnalistas = computed<AnalystRow[]>(() => {
+    const alertas = this.dashboard()?.alertsByAnalyst ?? [];
+    const porNombre = new Map<string, AnalystRow>();
+
+    for (const a of alertas) {
+      porNombre.set(a.analystName, {
+        id: a.analystId,
+        nombre: a.analystName,
+        contenedores: 0,
+        advertencia: 0,
+        criticosVencidos: 0,
+        alertas: a.generated,
+        gestionadasPct: a.generated === 0 ? null : Math.round((a.managed / a.generated) * 100)
+      });
+    }
+
+    for (const c of this.contenedores()) {
+      const nombre = c.asignadoA ?? 'Sin asignar';
+      const fila = porNombre.get(nombre) ?? {
+        id: null, nombre, contenedores: 0, advertencia: 0, criticosVencidos: 0, alertas: 0, gestionadasPct: null
+      };
+      fila.contenedores++;
+      if (c.nivelRiesgo === 'WARNING') fila.advertencia++;
+      if (c.nivelRiesgo === 'CRITICAL' || c.nivelRiesgo === 'OVERDUE') fila.criticosVencidos++;
+      porNombre.set(nombre, fila);
+    }
+
+    return Array.from(porNombre.values()).sort((a, b) =>
+      b.criticosVencidos - a.criticosVencidos || b.advertencia - a.advertencia || a.nombre.localeCompare(b.nombre)
+    );
   });
 
   readonly riskSegments = computed<RiskSegment[]>(() => {
@@ -125,79 +292,52 @@ export class ManagementPanelComponent implements OnInit {
       });
   });
 
-  readonly alertsChartData = computed<ChartConfiguration<'bar'>['data']>(() => {
-    const data = this.dashboard()?.alertsByAnalyst ?? [];
+  readonly tendenciaChartData = computed<ChartConfiguration<'bar'>['data']>(() => {
+    const nombres = new Set((this.dashboard()?.alertsByAnalyst ?? []).map(a => a.analystName));
+    const alertas = this.alertService.alertas().filter(a => !a.analistaAsignado || nombres.has(a.analistaAsignado));
     const c = this.colores();
 
+    const dias: string[] = [];
+    const cursor = new Date(this.fromDate());
+    cursor.setHours(0, 0, 0, 0);
+    const fin = new Date(this.toDate());
+    fin.setHours(0, 0, 0, 0);
+    while (cursor <= fin) {
+      dias.push(this.claveDia(cursor));
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    const niveles: { nivel: string; color: string }[] = [
+      { nivel: 'WARNING', color: c.warning },
+      { nivel: 'CRITICAL', color: c.critical },
+      { nivel: 'OVERDUE', color: c.overdue }
+    ];
+
     return {
-      labels: data.map(a => a.analystName),
-      datasets: [
-        {
-          label: 'Gestionadas',
-          data: data.map(a => a.managed),
-          backgroundColor: c.primary,
-          borderRadius: 4,
-          maxBarThickness: 40
-        },
-        {
-          label: 'Pendientes',
-          data: data.map(a => Math.max(0, a.generated - a.managed)),
-          backgroundColor: c.pending,
-          borderRadius: 4,
-          maxBarThickness: 40
-        }
-      ]
+      labels: dias.map(d => `${d.slice(8, 10)}/${d.slice(5, 7)}`),
+      datasets: niveles.map(n => ({
+        label: RISK_LABELS[n.nivel],
+        backgroundColor: n.color,
+        borderRadius: 2,
+        maxBarThickness: 28,
+        data: dias.map(d => alertas.filter(a => a.nivelRiesgo === n.nivel && this.claveDia(new Date(a.createAt)) === d).length)
+      }))
     };
   });
 
-  readonly alertsChartOptions = computed<ChartConfiguration<'bar'>['options']>(() => {
-    const opts = this.barOptions(true);
-    return {
-      ...opts,
-      scales: {
-        x: { ...opts!.scales!['x'], stacked: true },
-        y: { ...opts!.scales!['y'], stacked: true }
-      }
-    };
-  });
-
-  readonly documentsChartData = computed<ChartConfiguration<'line'>['data']>(() => {
-    const data = this.dashboard()?.documentsByPeriod ?? [];
-    const c = this.colores();
-
-    return {
-      labels: data.map(d => this.formatearFechaCorta(d.date)),
-      datasets: [{
-        label: 'Documentos cargados',
-        data: data.map(d => d.count),
-        borderColor: c.primary,
-        backgroundColor: c.primary,
-        pointBackgroundColor: c.primary,
-        pointRadius: 4,
-        borderWidth: 2,
-        tension: 0.25,
-        fill: false
-      }]
-    };
-  });
-
-  readonly documentsChartOptions = computed<ChartConfiguration<'line'>['options']>(() => {
+  readonly tendenciaChartOptions = computed<ChartConfiguration<'bar'>['options']>(() => {
     const c = this.colores();
     return {
       responsive: true,
       maintainAspectRatio: false,
       interaction: { mode: 'index', intersect: false },
       plugins: {
-        legend: { display: false },
+        legend: { display: true, position: 'bottom', labels: { color: c.text } },
         tooltip: { enabled: true }
       },
       scales: {
-        x: { grid: { display: false }, ticks: { color: c.textMuted } },
-        y: {
-          beginAtZero: true,
-          ticks: { color: c.textMuted, precision: 0 },
-          grid: { color: c.grid }
-        }
+        x: { stacked: true, grid: { display: false }, ticks: { color: c.textMuted, maxRotation: 0, autoSkip: true } },
+        y: { stacked: true, beginAtZero: true, ticks: { color: c.textMuted, precision: 0 }, grid: { color: c.grid } }
       }
     };
   });
@@ -209,11 +349,15 @@ export class ManagementPanelComponent implements OnInit {
 
       const desde = this.fromDate();
       const hasta = this.toDate();
+      const duracion = hasta.getTime() - desde.getTime();
+      const desdeAnterior = new Date(desde.getTime() - duracion);
 
       this.cargando.set(true);
       this.error.set(null);
 
-      this.teamDashboardService.getDashboard(jefeId, desde, hasta).subscribe({
+      const todos = jefeId === TODOS_LOS_EQUIPOS;
+
+      (todos ? this.teamDashboardService.getDashboardTodos(desde, hasta) : this.teamDashboardService.getDashboard(jefeId, desde, hasta)).subscribe({
         next: data => {
           this.dashboard.set(data);
           this.cargando.set(false);
@@ -222,6 +366,26 @@ export class ManagementPanelComponent implements OnInit {
           this.error.set('No se pudo cargar el dashboard del equipo.');
           this.cargando.set(false);
         }
+      });
+
+      (todos ? this.teamDashboardService.getDashboardTodos(desdeAnterior, desde) : this.teamDashboardService.getDashboard(jefeId, desdeAnterior, desde)).subscribe({
+        next: data => this.dashboardAnterior.set(data),
+        error: () => this.dashboardAnterior.set(null)
+      });
+    });
+
+    effect(() => {
+      const jefeId = this.jefeSeleccionado();
+      if (jefeId == null) return;
+
+      this.containerService.listarPorEquipo({ jefeId: jefeId === TODOS_LOS_EQUIPOS ? null : jefeId }).subscribe({
+        next: items => this.contenedores.set(items),
+        error: () => this.contenedores.set([])
+      });
+
+      (jefeId === TODOS_LOS_EQUIPOS ? this.teamDocumentsService.getDocumentsTodos() : this.teamDocumentsService.getDocuments(jefeId)).subscribe({
+        next: items => this.documentos.set(items),
+        error: () => this.documentos.set([])
       });
     });
   }
@@ -239,6 +403,8 @@ export class ManagementPanelComponent implements OnInit {
     });
 
     const jefeIdFromQuery = Number(this.route.snapshot.queryParamMap.get('jefeId'));
+    this.jefeSeleccionado.set(TODOS_LOS_EQUIPOS);
+
     if (jefeIdFromQuery > 0) {
       this.jefeSeleccionado.set(jefeIdFromQuery);
     }
@@ -266,35 +432,67 @@ export class ManagementPanelComponent implements OnInit {
     if (fecha) this.toDate.set(fecha);
   }
 
+  verContenedores(riesgo?: string, analistaId?: number | null): void {
+    const queryParams: Record<string, string | number> = {};
+    if (riesgo) queryParams['riesgo'] = riesgo;
+    if (analistaId != null) queryParams['analistaId'] = analistaId;
+    const jefeId = this.jefeSeleccionado();
+    if (this.esAdmin() && jefeId != null && jefeId > 0) queryParams['jefeId'] = jefeId;
+    this.router.navigate(['/equipo/dashboard'], { queryParams });
+  }
+
+  verAlertas(): void {
+    this.router.navigate(['/alertas']);
+  }
+
+  imprimir(): void {
+    window.print();
+  }
+
+  exportar(): void {
+    const formato = (f: Date) => f.toLocaleDateString('es-CL');
+    const comparar = (d: Delta | null) => d?.texto ?? '';
+
+    const resumen = [
+      { Indicador: 'Período', Valor: `${formato(this.fromDate())} al ${formato(this.toDate())}`, Comparación: '' },
+      { Indicador: 'Contenedores del equipo (hoy)', Valor: this.totalContenedores(), Comparación: '' },
+      { Indicador: 'Contenedores en riesgo (%)', Valor: `${this.enRiesgoPct()}%`, Comparación: '' },
+      { Indicador: 'Contenedores vencidos (hoy)', Valor: this.vencidos(), Comparación: '' },
+      { Indicador: 'Alertas generadas', Valor: this.alertasGeneradas(), Comparación: comparar(this.deltaAlertas()) },
+      { Indicador: 'Alertas gestionadas (%)', Valor: this.gestionadasPct() ?? 'Sin datos', Comparación: comparar(this.deltaGestionadas()) },
+      { Indicador: 'Tiempo de reacción (alertas críticas)', Valor: this.reaccionLabel(), Comparación: comparar(this.deltaReaccion()) },
+      { Indicador: 'Documentos cargados en el período', Valor: this.documentosPeriodo().length, Comparación: '' },
+      { Indicador: 'Confianza media de la IA (%)', Valor: this.confianzaMedia() ?? 'Sin datos', Comparación: '' },
+      { Indicador: 'Documentos por revisar (%)', Valor: this.porRevisarPct() ?? 'Sin datos', Comparación: '' },
+      { Indicador: 'Costo estimado acumulado por vencidos (USD, aproximado)', Valor: this.costoAcumulado().usd, Comparación: `${this.costoAcumulado().dias} días de atraso x USD ${TARIFA_DIARIA_USD} por día (tarifa supuesta)` },
+      { Indicador: 'Costo diario estimado en juego (USD, aproximado)', Valor: this.costoDiarioEnJuego().usd, Comparación: `${this.costoDiarioEnJuego().contenedores} contenedores críticos o vencidos x USD ${TARIFA_DIARIA_USD} por día (tarifa supuesta)` }
+    ];
+
+    const analistas = this.filasAnalistas().map(f => ({
+      Analista: f.nombre,
+      Contenedores: f.contenedores,
+      'En advertencia': f.advertencia,
+      'Críticos y vencidos': f.criticosVencidos,
+      'Alertas generadas': f.alertas,
+      'Alertas gestionadas (%)': f.gestionadasPct ?? ''
+    }));
+
+    exportToExcelHojas('resumen-gestion-equipo', [
+      { nombre: 'Resumen', filas: resumen },
+      { nombre: 'Desempeño por analista', filas: analistas }
+    ]);
+  }
+
+  private claveDia(fecha: Date): string {
+    const y = fecha.getFullYear();
+    const m = String(fecha.getMonth() + 1).padStart(2, '0');
+    const d = String(fecha.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
   private calcularDesde(dias: number): Date {
     const fecha = new Date();
     fecha.setDate(fecha.getDate() - dias);
     return fecha;
-  }
-
-  private formatearFechaCorta(iso: string): string {
-    const [, mes, dia] = iso.split('T')[0].split('-');
-    return `${dia}/${mes}`;
-  }
-
-  private barOptions(showLegend: boolean): ChartConfiguration<'bar'>['options'] {
-    const c = this.colores();
-    return {
-      responsive: true,
-      maintainAspectRatio: false,
-      interaction: { mode: 'nearest', intersect: true },
-      plugins: {
-        legend: { display: showLegend, position: 'bottom', labels: { color: c.text } },
-        tooltip: { enabled: true }
-      },
-      scales: {
-        x: { grid: { display: false }, ticks: { color: c.textMuted } },
-        y: {
-          beginAtZero: true,
-          ticks: { color: c.textMuted, precision: 0 },
-          grid: { color: c.grid }
-        }
-      }
-    };
   }
 }

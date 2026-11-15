@@ -40,6 +40,7 @@ export class ShellComponent {
       case 'Jefe':
         return [
           { path: '/equipo/dashboard', label: 'Dashboard de equipo', icon: 'groups' },
+          { path: '/equipo/documentos', label: 'Documentos del equipo', icon: 'description' },
           { path: '/equipo/gestion', label: 'Panel de gestión', icon: 'bar_chart' },
           { path: '/alertas', label: 'Alertas del equipo', icon: 'notifications' }
         ];
@@ -47,6 +48,7 @@ export class ShellComponent {
         return [
           { path: '/admin/dashboard-global', label: 'Dashboard global', icon: 'public' },
           { path: '/equipo/dashboard', label: 'Dashboard de equipo', icon: 'groups' },
+          { path: '/equipo/documentos', label: 'Documentos del equipo', icon: 'description' },
           { path: '/equipo/gestion', label: 'Panel de gestión', icon: 'bar_chart' },
           { path: '/alertas', label: 'Alertas', icon: 'notifications' },
           { path: '/admin/usuarios', label: 'Usuarios', icon: 'manage_accounts' },

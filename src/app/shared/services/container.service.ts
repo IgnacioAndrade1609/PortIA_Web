@@ -1,9 +1,10 @@
-import { Injectable, inject, signal } from '@angular/core';
+import { Injectable, effect, inject, signal } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { forkJoin, map, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { BackendContainer, ContainerDetail, ContainerListItem } from '../models/container.model';
 import { Hito } from '../models/hito.model';
+import { AuthService } from '../../core/services/auth.service';
 
 export interface ContainerTeamFilter {
   jefeId?: number | null;
@@ -26,6 +27,7 @@ function toListItem(c: BackendContainer): ContainerListItem {
     deadlineDetention: c.detentionDeadline,
     estadoPuerto: c.portStatus,
     nivelRiesgo: c.riskLevel ?? 'OK',
+    horasParaDeadline: c.hoursToDeadline ?? null,
     asignadoA: c.assignedTo?.name
   };
 }
@@ -33,6 +35,7 @@ function toListItem(c: BackendContainer): ContainerListItem {
 @Injectable({ providedIn: 'root' })
 export class ContainerService {
   private readonly http = inject(HttpClient);
+  private readonly auth = inject(AuthService);
   private readonly apiUrl = `${environment.apiUrl}/containers`;
 
   private readonly listaSignal = signal<ContainerListItem[]>([]);
@@ -40,7 +43,13 @@ export class ContainerService {
   readonly lista = this.listaSignal.asReadonly();
 
   constructor() {
-    this.cargarContenedores();
+    effect(() => {
+      if (this.auth.token()) {
+        this.cargarContenedores();
+      } else {
+        this.listaSignal.set([]);
+      }
+    });
   }
 
   cargarContenedores(): void {
@@ -98,6 +107,10 @@ export class ContainerService {
         return detalle;
       })
     );
+  }
+
+  asignar(id: number, assignedTo: number): Observable<void> {
+    return this.http.put<void>(`${this.apiUrl}/${id}/assign`, { assignedTo });
   }
 
   marcarRetiro(id: number): Observable<void> {
