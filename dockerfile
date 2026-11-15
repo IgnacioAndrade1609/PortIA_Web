@@ -8,8 +8,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 ENV PYTHONUNBUFFERED=1 \
-    HF_HOME=/app/.cache/huggingface \
-    DOCLING_ARTIFACTS_PATH=/app/.cache/docling
+    HF_HOME=/app/.cache/huggingface
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
