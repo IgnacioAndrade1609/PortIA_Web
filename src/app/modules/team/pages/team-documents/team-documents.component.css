@@ -1,0 +1,11 @@
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: .5rem;
+}
+
+.confianza-baja {
+  color: var(--pv-chip-warning-fg);
+  font-weight: 500;
+}

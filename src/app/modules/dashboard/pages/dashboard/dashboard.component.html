@@ -5,16 +5,16 @@
   </div>
 
   <div class="pv-section no-print">
-    <form (ngSubmit)="buscar()">
+    <form (submit)="$event.preventDefault(); buscar()">
       <div class="pv-form-row">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
           <mat-label>N° Contenedor</mat-label>
-          <input matInput [value]="draftBusqueda()" (input)="draftBusqueda.set($any($event.target).value)" />
+          <input matInput [value]="draftBusqueda()" (input)="draftBusqueda.set($any($event.target).value); buscar()" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
           <mat-label>Riesgo</mat-label>
-          <mat-select [value]="draftRiesgo()" (selectionChange)="draftRiesgo.set($event.value)">
+          <mat-select [value]="draftRiesgo()" (selectionChange)="draftRiesgo.set($event.value); buscar()">
             <mat-option value="TODOS">Todos</mat-option>
             <mat-option value="OK">OK</mat-option>
             <mat-option value="WARNING">Advertencia</mat-option>
@@ -25,7 +25,7 @@
 
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
           <mat-label>Naviera</mat-label>
-          <mat-select [value]="draftNaviera()" (selectionChange)="draftNaviera.set($event.value)">
+          <mat-select [value]="draftNaviera()" (selectionChange)="draftNaviera.set($event.value); buscar()">
             <mat-option value="TODAS">Todas</mat-option>
             @for (naviera of navieras(); track naviera) {
               <mat-option [value]="naviera">{{ naviera }}</mat-option>

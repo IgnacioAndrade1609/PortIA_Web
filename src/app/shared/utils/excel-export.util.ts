@@ -14,3 +14,15 @@ export async function parseExcelFile(archivo: File): Promise<Record<string, stri
   const primeraHoja = libro.Sheets[libro.SheetNames[0]];
   return XLSX.utils.sheet_to_json<Record<string, string>>(primeraHoja, { raw: false, defval: '', dateNF: formatoFecha });
 }
+
+export async function exportToExcelHojas(
+  nombreArchivo: string,
+  hojas: { nombre: string; filas: Record<string, unknown>[] }[]
+): Promise<void> {
+  const XLSX = await import('xlsx');
+  const libro = XLSX.utils.book_new();
+  for (const hoja of hojas) {
+    XLSX.utils.book_append_sheet(libro, XLSX.utils.json_to_sheet(hoja.filas), hoja.nombre);
+  }
+  XLSX.writeFile(libro, `${nombreArchivo}.xlsx`);
+}

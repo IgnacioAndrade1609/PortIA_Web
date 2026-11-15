@@ -71,6 +71,13 @@ export const routes: Routes = [
         data: { breadcrumb: 'Dashboard de equipo' }
       },
       {
+        path: 'equipo/documentos',
+        canActivate: [roleGuard(['Jefe', 'Admin'])],
+        loadComponent: () =>
+          import('./modules/team/pages/team-documents/team-documents.component').then(m => m.TeamDocumentsComponent),
+        data: { breadcrumb: 'Documentos del equipo' }
+      },
+      {
         path: 'equipo/gestion',
         canActivate: [roleGuard(['Jefe', 'Admin'])],
         loadComponent: () =>

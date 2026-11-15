@@ -28,6 +28,16 @@ export class NotificationService {
   }
 
 
+  rechazar(alertaId: number, canalId: number, motivo?: string): Observable<any> {
+    return this.http.post(`${this.apiUrl}/${alertaId}/reject`, { canalId, motivo }).pipe(
+      tap(() => {
+        this.pendientesSignal.update(lista =>
+          lista.filter(p => !(p.alertaId === alertaId && p.canalId === canalId))
+        );
+      })
+    );
+  }
+
   enviar(alertaId: number, request: SendNotificationRequest): Observable<any> {
     return this.http.post(`${this.apiUrl}/${alertaId}/send`, request).pipe(
       tap(() => {
