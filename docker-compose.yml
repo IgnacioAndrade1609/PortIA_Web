@@ -43,7 +43,7 @@ services:
       retries: 5
 
   core:
-    build: ./PortIA_Core
+    build: ./Core
     container_name: portia-core
     ports:
       - "8080:8080"
@@ -61,7 +61,7 @@ services:
       - minio
 
   agentes:
-    build: ./PortIA_Agentes
+    build: ./Agentes
     container_name: portia-agentes
     ports:
       - "8000:8000"
@@ -76,3 +76,11 @@ services:
 volumes:
   postgres_data:
   minio_data:
+
+  web:
+    build: ./Web
+    container_name: portia-web
+    ports:
+      - "4200:80"
+    depends_on:
+      - core
