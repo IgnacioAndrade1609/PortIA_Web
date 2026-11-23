@@ -185,7 +185,31 @@ Deben aparecer 7 contenedores en estado `running`:
 
 > PostgreSQL usa el puerto `5433` (no el `5432` estándar) para no chocar con instalaciones locales de PostgreSQL.
 
-**5. Abrir la aplicación**
+**5. Cargar los datos de prueba**
+
+La base de datos parte vacía (el Core crea las tablas al arrancar, pero no hay usuarios). Carga los datos de desarrollo, estando en `docker/`:
+
+```bash
+docker compose exec postgres psql -U portia -d portia_db -f /seeds/seed-dev.sql
+docker compose exec postgres psql -U portia -d portia_db -f /seeds/seed-demo.sql
+```
+
+Si usas Git Bash en Windows, antepón `MSYS_NO_PATHCONV=1` a cada comando. Los scripts se pueden ejecutar más de una vez sin duplicar datos.
+
+- `seed-dev.sql`: los 3 usuarios base, terminales y 3 contenedores con distintos niveles de riesgo.
+- `seed-demo.sql`: datos para la demostración (más usuarios, navieras, contenedores, hitos, documentos y alertas). Cárgalo después de `seed-dev.sql`.
+
+Usuarios de prueba (contraseña de todos: `portia123`):
+
+| Correo | Rol |
+|---|---|
+| `analista@portia.cl` | Analista |
+| `jefe@portia.cl` | Jefe |
+| `admin@portia.cl` | Admin |
+
+Son datos solo para desarrollo, no deben usarse en un ambiente real.
+
+**6. Abrir la aplicación**
 
 - **Aplicación web:** http://localhost:4200
 - **API del Core (Swagger):** http://localhost:8080/swagger
@@ -251,6 +275,7 @@ cd Web && npm test -- --no-watch
 docker/
 ├── docker-compose.yml
 ├── agentes.env.example
+├── db/seed-dev.sql, seed-demo.sql
 ├── core/Dockerfile
 ├── agentes/Dockerfile
 └── web/
