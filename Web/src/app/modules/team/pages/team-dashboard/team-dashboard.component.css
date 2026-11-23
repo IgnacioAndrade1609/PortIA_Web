@@ -1,0 +1,50 @@
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kpi-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.kpi-card:hover {
+  background-color: var(--mat-sys-surface-container);
+}
+
+.kpi-label {
+  font-size: var(--pv-font-size-base);
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.kpi-value {
+  font-size: var(--pv-font-size-xl);
+  font-weight: 500;
+}
+
+.kpi-value--danger {
+  color: var(--pv-chip-danger-fg);
+}
+
+.kpi-value--warning {
+  color: var(--pv-chip-warning-fg);
+}
+
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: .5rem;
+}

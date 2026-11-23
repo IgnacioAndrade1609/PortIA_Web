@@ -1,0 +1,6 @@
+.filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: .5rem;
+}

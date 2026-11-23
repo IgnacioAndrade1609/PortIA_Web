@@ -1,0 +1,37 @@
+.upload-error {
+  color: var(--mat-sys-error);
+  margin-top: 12px;
+}
+
+.upload-progress {
+  margin-top: 16px;
+}
+
+.bulk-edit-results {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.bulk-edit-results td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant);
+  vertical-align: top;
+}
+
+.bulk-edit-container {
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.status-ok {
+  color: var(--pv-chip-success-fg);
+}
+
+.status-error {
+  color: var(--mat-sys-error);
+}
+
+.status-sin_cambios {
+  color: var(--mat-sys-on-surface-variant);
+}

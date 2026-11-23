@@ -1,0 +1,114 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Mi historial</h4>
+  </div>
+  <p class="pv-section-subtitle historial-subtitulo">Lo que hiciste sobre tus contenedores y lo que el sistema actualizó por ti.</p>
+
+  <div class="pv-section no-print">
+    <div class="pv-form-row">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+        <mat-label>N° Contenedor o texto</mat-label>
+        <input matInput [value]="busqueda()" (input)="busqueda.set($any($event.target).value)" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+        <mat-label>Origen</mat-label>
+        <mat-select [value]="origen()" (selectionChange)="origen.set($event.value)">
+          <mat-option value="TODOS">Todos</mat-option>
+          <mat-option value="USUARIO">Mis acciones</mat-option>
+          <mat-option value="SISTEMA">Sistema</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+        <mat-label>Tipo</mat-label>
+        <mat-select [value]="categoria()" (selectionChange)="categoria.set($event.value)">
+          <mat-option value="TODAS">Todos</mat-option>
+          <mat-option value="CONTENEDOR">Contenedores</mat-option>
+          <mat-option value="MENSAJE">Mensajes</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+        <mat-label>Desde</mat-label>
+        <input matInput type="date" [value]="desde()" (input)="desde.set($any($event.target).value)" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+        <mat-label>Hasta</mat-label>
+        <input matInput type="date" [value]="hasta()" (input)="hasta.set($any($event.target).value)" />
+      </mat-form-field>
+
+      <div class="pv-col-1 filter-actions">
+        <button type="button" matIconButton class="btn-icon-dark" matTooltip="Limpiar" (click)="limpiar()">
+          <mat-icon>filter_alt_off</mat-icon>
+        </button>
+      </div>
+    </div>
+
+    <mat-checkbox [checked]="mostrarConsultas()" (change)="mostrarConsultas.set($event.checked)">
+      Mostrar también cuando solo consulté un contenedor
+    </mat-checkbox>
+  </div>
+
+  <table mat-table [dataSource]="filtrados()" class="pv-table-full mat-elevation-z1">
+    <ng-container matColumnDef="fecha">
+      <th mat-header-cell *matHeaderCellDef>Fecha</th>
+      <td mat-cell *matCellDef="let e" class="celda-fecha">{{ e.fecha | date: 'dd-MM-yyyy HH:mm' }}</td>
+    </ng-container>
+
+    <ng-container matColumnDef="contenedor">
+      <th mat-header-cell *matHeaderCellDef>Contenedor</th>
+      <td mat-cell *matCellDef="let e">
+        @if (e.contenedorId && e.contenedorNumero) {
+          <a [routerLink]="['/contenedores', e.contenedorId]">{{ e.contenedorNumero }}</a>
+        } @else if (e.contenedorId) {
+          <a [routerLink]="['/contenedores', e.contenedorId]">Ver contenedor</a>
+        } @else {
+          —
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="detalle">
+      <th mat-header-cell *matHeaderCellDef>Qué pasó</th>
+      <td mat-cell *matCellDef="let e" class="celda-detalle">
+        <div class="evento-titulo">
+          {{ e.titulo }}
+          <button type="button" matIconButton class="btn-tecnico" matTooltip="Ver datos técnicos" (click)="alternarTecnico(e.id)">
+            <mat-icon>{{ expandidos().has(e.id) ? 'expand_less' : 'data_object' }}</mat-icon>
+          </button>
+        </div>
+
+        @for (c of e.cambios; track c.campo) {
+          <div class="evento-cambio">
+            <span class="cambio-campo">{{ c.campo }}:</span>
+            <span class="cambio-antes">{{ c.antes }}</span>
+            <mat-icon class="cambio-flecha">arrow_forward</mat-icon>
+            <span class="cambio-despues">{{ c.despues }}</span>
+          </div>
+        }
+
+        @if (expandidos().has(e.id)) {
+          <pre class="evento-tecnico">{{ e.tecnico }}</pre>
+        }
+      </td>
+    </ng-container>
+
+    <ng-container matColumnDef="origen">
+      <th mat-header-cell *matHeaderCellDef>Origen</th>
+      <td mat-cell *matCellDef="let e">
+        <app-chip [color]="e.origen === 'SISTEMA' ? 'neutral' : 'primary'">
+          {{ e.origen === 'SISTEMA' ? 'Sistema' : 'Tú' }}
+        </app-chip>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+    <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+
+    <tr class="mat-row" *matNoDataRow>
+      <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">No hay acciones para mostrar con estos filtros.</td>
+    </tr>
+  </table>
+</div>

@@ -1,0 +1,68 @@
+::ng-deep .mat-mdc-menu-panel.notifications-panel {
+  width: 440px;
+  max-width: 92vw;
+}
+
+.notifications-header {
+  padding: 10px 20px;
+  font-weight: 600;
+  cursor: default;
+}
+
+.notifications-empty {
+  padding: 16px;
+  color: var(--mat-sys-on-surface-variant);
+  cursor: default;
+}
+
+.notification-item {
+  height: auto !important;
+  line-height: normal !important;
+  padding: 10px 20px !important;
+}
+
+.notification-item.no-leida {
+  background-color: color-mix(in srgb, var(--brand-primary) 8%, transparent);
+}
+
+.notification-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+}
+
+.notification-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+  white-space: normal;
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-contenedor {
+  font-weight: 600;
+}
+
+.notification-mensaje {
+  font-size: var(--pv-font-size-base);
+  color: var(--mat-sys-on-surface-variant);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.notification-fecha {
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.notifications-footer {
+  text-align: center;
+  color: var(--brand-primary);
+  font-weight: 500;
+}

@@ -1,0 +1,150 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Documentos del equipo</h4>
+  </div>
+
+  @if (esAdmin() && jefeSeleccionado() == null) {
+    <div class="pv-section no-print">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" style="min-width: 240px;">
+        <mat-label>Jefe</mat-label>
+        <mat-select [value]="jefeSeleccionado()" (selectionChange)="seleccionarJefe($event.value)">
+          @for (jefe of jefes(); track jefe.id) {
+            <mat-option [value]="jefe.id">{{ jefe.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <p class="pv-hint-text">Selecciona un jefe para ver los documentos de su equipo.</p>
+  } @else {
+    <div class="pv-section no-print">
+      <form (submit)="$event.preventDefault(); buscar()">
+        <div class="pv-form-row">
+          @if (esAdmin()) {
+            <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+              <mat-label>Jefe</mat-label>
+              <mat-select [value]="jefeSeleccionado()" (selectionChange)="seleccionarJefe($event.value)">
+                @for (jefe of jefes(); track jefe.id) {
+                  <mat-option [value]="jefe.id">{{ jefe.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+            <mat-label>Analista</mat-label>
+            <mat-select [value]="analistaSeleccionado()" (selectionChange)="analistaSeleccionado.set($event.value)">
+              <mat-option value="TODOS">Todo el equipo</mat-option>
+              @for (analista of analistas(); track analista.id) {
+                <mat-option [value]="analista.id">{{ analista.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+            <mat-label>Tipo</mat-label>
+            <mat-select [value]="draftTipo()" (selectionChange)="draftTipo.set($event.value); buscar()">
+              <mat-option value="TODOS">Todos</mat-option>
+              @for (tipo of tipos(); track tipo) {
+                <mat-option [value]="tipo">{{ tipo }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-2">
+            <mat-label>Estado</mat-label>
+            <mat-select [value]="draftEstado()" (selectionChange)="draftEstado.set($event.value); buscar()">
+              <mat-option value="TODOS">Todos</mat-option>
+              @for (estado of estados(); track estado) {
+                <mat-option [value]="estado">{{ etiquetaEstado(estado) }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+            <mat-label>Confianza IA</mat-label>
+            <mat-select [value]="draftConfianza()" (selectionChange)="draftConfianza.set($event.value); buscar()">
+              <mat-option value="TODAS">Todas</mat-option>
+              <mat-option value="BAJA">Baja (menos de 80%)</mat-option>
+              <mat-option value="MEDIA">Media (80% a 89%)</mat-option>
+              <mat-option value="ALTA">Alta (90% o más)</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <div class="pv-col-2 filter-actions">
+            <button type="button" matIconButton class="btn-icon-dark" matTooltip="Limpiar" (click)="limpiar()">
+              <mat-icon>filter_alt_off</mat-icon>
+            </button>
+            <button type="submit" matIconButton class="btn-icon-primary" matTooltip="Buscar">
+              <mat-icon>search</mat-icon>
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <div class="pv-actions-row no-print">
+      <span class="pv-spacer"></span>
+      <div class="pv-btn-group">
+        <button matButton="outlined" (click)="exportar()">
+          <mat-icon>file_download</mat-icon>Exportar a Excel
+        </button>
+      </div>
+    </div>
+
+    <table mat-table matSort [matSortActive]="orden().active" [matSortDirection]="orden().direction" (matSortChange)="ordenar($event)" [dataSource]="filtrados()" class="pv-table-full mat-elevation-z1">
+      <ng-container matColumnDef="tipoDocumento">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Tipo</th>
+        <td mat-cell *matCellDef="let d">{{ d.tipoDocumento }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="analystName">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Analista</th>
+        <td mat-cell *matCellDef="let d">{{ d.analystName }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="createAt">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Fecha de carga</th>
+        <td mat-cell *matCellDef="let d">{{ d.createAt | date: 'dd-MM-yyyy HH:mm' }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="estadoExtraccion">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Estado</th>
+        <td mat-cell *matCellDef="let d">{{ etiquetaEstado(d.estadoExtraccion) }}</td>
+      </ng-container>
+
+      <ng-container matColumnDef="confidence">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Confianza IA</th>
+        <td mat-cell *matCellDef="let d" [class]="claseConfianza(d.confidence)">
+          {{ d.confidence != null ? (d.confidence * 100 | number: '1.0-0') + '%' : '—' }}
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="containerNumber">
+        <th mat-header-cell mat-sort-header *matHeaderCellDef>Contenedor</th>
+        <td mat-cell *matCellDef="let d">
+          @if (d.containerId) {
+            <a [routerLink]="['/contenedores', d.containerId]">{{ d.containerNumber }}</a>
+          } @else {
+            —
+          }
+        </td>
+      </ng-container>
+
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef></th>
+        <td mat-cell *matCellDef="let d">
+          <button matIconButton class="btn-icon-primary" matTooltip="Ver documento" (click)="abrirDocumento(d.downloadUrl)">
+            <mat-icon>description</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+
+      <tr class="mat-row" *matNoDataRow>
+        <td class="mat-cell pv-no-data-cell" [attr.colspan]="columnas.length">Sin registros</td>
+      </tr>
+    </table>
+  }
+</div>

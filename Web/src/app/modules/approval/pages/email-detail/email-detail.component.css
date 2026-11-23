@@ -1,0 +1,10 @@
+.detail-card {
+  max-width: 720px;
+}
+
+.detail-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}

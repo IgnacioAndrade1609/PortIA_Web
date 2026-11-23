@@ -1,0 +1,82 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title">Revisión de datos extraídos</h4>
+  </div>
+  <p class="pv-section-subtitle review-intro">Documentos donde la IA quedó con confianza insuficiente. Corrige lo que extrajo mal y confirma.</p>
+
+  @if (pendientes().length === 0) {
+    <p class="pv-hint-text">No hay documentos pendientes de revisión.</p>
+  }
+
+  @for (doc of pendientes(); track doc.idDocumento) {
+    <div class="pv-box pv-section">
+      <div class="review-header">
+        <span class="pv-section-title">Carga #{{ doc.idCargaDocumentos }}</span>
+        <app-chip [color]="colorConfianza(doc.confidence)">
+          Confianza: {{ doc.confidence !== null ? (doc.confidence * 100).toFixed(0) + '%' : 'N/D' }}
+        </app-chip>
+      </div>
+
+      @if (errores()[doc.idDocumento]) {
+        <p class="review-error">{{ errores()[doc.idDocumento] }}</p>
+      }
+
+      <div class="pv-form-row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4" [class.review-field-error]="errores()[doc.idDocumento]">
+          <mat-label>N° Contenedor</mat-label>
+          <input matInput [ngModel]="datosForm(doc.idDocumento, doc.datos).numeroContainer"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'numeroContainer', $event)" />
+          <mat-hint>4 letras + 7 dígitos (ej: MSCU1234567)</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4">
+          <mat-label>Naviera</mat-label>
+          <input matInput [ngModel]="datosForm(doc.idDocumento, doc.datos).naviera"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'naviera', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4">
+          <mat-label>Puerto destino</mat-label>
+          <input matInput [ngModel]="datosForm(doc.idDocumento, doc.datos).puertoDestino"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'puertoDestino', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4">
+          <mat-label>N° BL</mat-label>
+          <input matInput [ngModel]="datosForm(doc.idDocumento, doc.datos).numeroBl"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'numeroBl', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4">
+          <mat-label>Forwarder</mat-label>
+          <input matInput [ngModel]="datosForm(doc.idDocumento, doc.datos).nombreForwarder"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'nombreForwarder', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4">
+          <mat-label>Llegada estimada</mat-label>
+          <input matInput type="date" [ngModel]="datosForm(doc.idDocumento, doc.datos).eta | slice:0:10"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'eta', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4">
+          <mat-label>Días libres demurrage</mat-label>
+          <input matInput type="number" [ngModel]="datosForm(doc.idDocumento, doc.datos).diasLibresDemurrage"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'diasLibresDemurrage', $event)" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-4">
+          <mat-label>Días libres detention</mat-label>
+          <input matInput type="number" [ngModel]="datosForm(doc.idDocumento, doc.datos).diasLibresDetention"
+                 (ngModelChange)="actualizarCampo(doc.idDocumento, doc.datos, 'diasLibresDetention', $event)" />
+        </mat-form-field>
+      </div>
+
+      <div class="pv-form-actions">
+        <button matButton="filled" class="btn-primary" [disabled]="enviando() === doc.idDocumento" (click)="confirmar(doc.idDocumento, doc.datos)">
+          Confirmar y crear contenedor
+        </button>
+      </div>
+    </div>
+  }
+</div>

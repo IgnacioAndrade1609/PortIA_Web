@@ -1,0 +1,180 @@
+<div class="pv-page">
+  <div class="pv-title-row">
+    <h4 class="pv-page-title pv-spacer">Gestión de usuarios</h4>
+    <button matButton="filled" class="btn-primary" (click)="mostrandoFormulario.set(!mostrandoFormulario())">
+      <mat-icon>{{ mostrandoFormulario() ? 'close' : 'add' }}</mat-icon>
+      {{ mostrandoFormulario() ? 'Cancelar' : 'Nuevo usuario' }}
+    </button>
+  </div>
+
+  @if (error()) {
+    <p class="login-error">{{ error() }}</p>
+  }
+
+  @if (mostrandoFormulario()) {
+    <form [formGroup]="form" (ngSubmit)="crear()" class="pv-box pv-section">
+      <div class="pv-form-row">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Nombre</mat-label>
+          <input matInput formControlName="nombreUsuario" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Correo</mat-label>
+          <input matInput type="email" formControlName="email" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Contraseña</mat-label>
+          <input matInput type="password" formControlName="password" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-col-3">
+          <mat-label>Rol</mat-label>
+          <mat-select formControlName="rolId">
+            @for (rol of roles(); track rol.id) {
+              <mat-option [value]="rol.id">{{ rol.name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="pv-form-actions">
+        <button matButton="filled" class="btn-primary" type="submit" [disabled]="guardando()">Crear usuario</button>
+      </div>
+    </form>
+  }
+
+  <form [formGroup]="filterForm" class="pv-toolbar-row">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field-wide">
+      <mat-label>Buscar</mat-label>
+      <input matInput formControlName="search" placeholder="Nombre o correo" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field">
+      <mat-label>Rol</mat-label>
+      <mat-select formControlName="roleId">
+        <mat-option [value]="null">Todos</mat-option>
+        @for (rol of roles(); track rol.id) {
+          <mat-option [value]="rol.id">{{ rol.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="pv-filter-field">
+      <mat-label>Estado</mat-label>
+      <mat-select formControlName="active">
+        <mat-option value="all">Todos</mat-option>
+        <mat-option value="active">Activos</mat-option>
+        <mat-option value="inactive">Inactivos</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <span class="pv-spacer"></span>
+
+    <div class="pv-filter-actions">
+      <button mat-stroked-button type="button" (click)="limpiarFiltros()">Limpiar filtros</button>
+    </div>
+  </form>
+
+  <div class="pv-table-container">
+    <table mat-table [dataSource]="usuarios()" class="pv-table-full mat-elevation-z1">
+      
+      <!-- Columna Nombre -->
+      <ng-container matColumnDef="nombreUsuario">
+        <th mat-header-cell *matHeaderCellDef>Nombre</th>
+        <td mat-cell *matCellDef="let u">
+          @if (editandoDatosId() === u.id) {
+            <div [formGroup]="editDatosForm" class="pv-inline-edit">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="name" placeholder="Nombre" />
+              </mat-form-field>
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="email" placeholder="Correo" />
+              </mat-form-field>
+              <button mat-icon-button color="primary" (click)="guardarDatos(u.id)"><mat-icon>check</mat-icon></button>
+              <button mat-icon-button (click)="cancelarEdicionDatos()"><mat-icon>close</mat-icon></button>
+            </div>
+          } @else {
+            {{ u.name }}
+          }
+        </td>
+      </ng-container>
+
+      <!-- Columna Correo -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Correo</th>
+        <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+      </ng-container>
+
+      <!-- Columna Rol -->
+      <ng-container matColumnDef="rol">
+        <th mat-header-cell *matHeaderCellDef>Rol</th>
+        <td mat-cell *matCellDef="let u">
+          @if (editandoRolId() === u.id) {
+            <div [formGroup]="editRolForm" class="pv-inline-edit">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="roleId">
+                  @for (rol of roles(); track rol.id) {
+                    <mat-option [value]="rol.id">{{ rol.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button mat-icon-button color="primary" (click)="guardarRol(u.id)"><mat-icon>check</mat-icon></button>
+              <button mat-icon-button (click)="cancelarEdicionRol()"><mat-icon>close</mat-icon></button>
+            </div>
+          } @else {
+            {{ u.role.name }}
+          }
+        </td>
+      </ng-container>
+
+      <!-- Columna Jefe asignado (solo aplica a usuarios con rol Analista) -->
+      <ng-container matColumnDef="jefe">
+        <th mat-header-cell *matHeaderCellDef>Jefe asignado</th>
+        <td mat-cell *matCellDef="let u">
+          @if (editandoJefeId() === u.id) {
+            <div [formGroup]="editJefeForm" class="pv-inline-edit">
+              <mat-form-field appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="jefeId">
+                  <mat-option [value]="null">Sin asignar</mat-option>
+                  @for (jefe of jefes(); track jefe.id) {
+                    <mat-option [value]="jefe.id">{{ jefe.name }}</mat-option>
+                  }
+                </mat-select>
+              </mat-form-field>
+              <button mat-icon-button color="primary" (click)="guardarJefe(u.id)"><mat-icon>check</mat-icon></button>
+              <button mat-icon-button (click)="cancelarEdicionJefe()"><mat-icon>close</mat-icon></button>
+            </div>
+          } @else if (u.role.name === 'Analista') {
+            {{ u.supervisor?.name ?? 'Sin asignar' }}
+          } @else {
+            —
+          }
+        </td>
+      </ng-container>
+
+      <!-- Columna Activo -->
+      <ng-container matColumnDef="vigente">
+        <th mat-header-cell *matHeaderCellDef>Activo</th>
+        <td mat-cell *matCellDef="let u">
+          <mat-slide-toggle [checked]="u.active" (change)="alternarVigencia(u)" />
+        </td>
+      </ng-container>
+
+      <!-- Columna Acciones -->
+      <ng-container matColumnDef="acciones">
+        <th mat-header-cell *matHeaderCellDef>Acciones</th>
+        <td mat-cell *matCellDef="let u" class="pv-actions-cell">
+          <button mat-stroked-button color="primary" (click)="iniciarEdicionDatos(u)">Modificar datos</button>
+          <button mat-stroked-button color="accent" (click)="iniciarEdicionRol(u)">Modificar rol</button>
+          @if (u.role.name === 'Analista') {
+            <button mat-stroked-button (click)="iniciarEdicionJefe(u)">Asignar jefe</button>
+          }
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="columnas"></tr>
+      <tr mat-row *matRowDef="let row; columns: columnas"></tr>
+    </table>
+  </div>
+</div>

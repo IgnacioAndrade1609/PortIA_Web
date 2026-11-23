@@ -18,8 +18,8 @@
 
 | Integrante | Rol principal |
 |---|---|
-| **Ignacio Andrade** | Arquitectura de software y Core (.NET 10 / N-Capas) |
-| **Nicolas Soto** | Frontend Web (Angular) |
+| **Ignacio Andrade** | Arquitectura de software, Core (.NET 10 / N-Capas), Frontend Web (Angular) e Inspector |
+| **Nicolas Soto** | Frontend Web (Angular) y Core (.NET 10 / N-Capas) |
 | **Airon Saez** | Agentes de Inteligencia Artificial (Python / FastAPI) |
 
 Profesor guía: Felipe Antonio Krauss Benavente.
@@ -54,7 +54,7 @@ PortIA está construido bajo **N-Capas** sobre .NET 10, aplicando el **Principio
 
 El punto más importante de la arquitectura es la **estrategia dual de verificación portuaria**: el sistema intenta primero obtener el estado real de un contenedor mediante *web scraping* (`ScrapingStrategy`, con Playwright) contra el portal del terminal. Si esa estrategia falla el portal cambia, se cae, o bloquea la IP, un mecanismo de **Circuit Breaker** conmuta automáticamente hacia una estrategia simulada (`MockStrategy`), garantizando que el sistema nunca se detenga por la volatilidad de un tercero.
 
-![Arquitectura de PortIA](docs/images/arquitectura.png)
+![Arquitectura de PortIA](Web/docs/images/arquitectura.png)
 
 ### Capas del sistema
 
@@ -74,34 +74,37 @@ El punto más importante de la arquitectura es la **estrategia dual de verificac
 - **Human-in-the-Loop**: ninguna comunicación externa (correos, notificaciones formales) se envía sin aprobación explícita de un usuario.
 - **Privacidad por diseño**: el PDF original nunca se persiste en la base de datos relacional; solo se guardan metadatos y datos estructurados, pensando en la Ley N° 21.719 de Protección de Datos Personales (vigente en Chile desde diciembre de 2026).
 
-### Estructura de repositorios del proyecto
+### Estructura del repositorio
 
-PortIA está dividido en tres repositorios independientes, comunicados entre sí mediante colas de mensajería:
+Todo el proyecto (código fuente y documentación) está unificado en este único repositorio. Las tres aplicaciones se comunican entre sí mediante colas de mensajería:
 
-| Repositorio | Contenido | Tecnología principal |
+| Carpeta | Contenido | Tecnología principal |
 |---|---|---|
-| **PortIA_Web** *(este repositorio)* | Cliente web, dashboard de control, documentación completa del proyecto | Angular |
-| **PortIA_Core** | Orquestador central: ingesta, motor de reglas, notificaciones en tiempo real | .NET 10 / C# |
-| **PortIA_Agentes** | Microservicios de IA: lectura de documentos e inspección portuaria | Python |
+| [`Web/`](Web) | Cliente web y dashboard de control | Angular |
+| [`Core/`](Core) | Orquestador central: ingesta, motor de reglas, notificaciones en tiempo real | .NET 10 / C# |
+| [`Agentes/`](Agentes) | Microservicios de IA: lectura de documentos e inspección portuaria | Python |
+| [`docker/`](docker) | Dockerfiles y `docker-compose.yml` para levantar todo el sistema | Docker |
+| `Fase 1/`, `Fase 2/` | Documentación y evidencias del proyecto de título | Documentos |
+
 
 ---
 
 ## Tecnologías utilizadas
 
-### Frontend (PortIA_Web)
+### Frontend (Web/)
 
 - **Framework:** Angular
 - **Tiempo real:** SignalR (WebSockets) para recibir alertas del semáforo sin recargar la página
 - **UI/UX:** diseño orientado a sistema de semáforos de riesgo
 
-### Core (PortIA_Core)
+### Core (Core/)
 
 - **Framework:** ASP.NET Core 10
 - **Lenguaje:** C#
 - **Arquitectura:** N-Capas (PortIA.Core.WebApi / PortIA.Core.Services / PortIA.Core.DependencyInjection / PortIA.Core.Configuration)
 - **Base de datos:** PostgreSQL
 
-### Agentes de IA (PortIA_Agentes)
+### Agentes de IA (Agentes/)
 
 - **Lenguaje:** Python
 - **Framework:** FastAPI
@@ -120,74 +123,165 @@ PortIA está dividido en tres repositorios independientes, comunicados entre sí
 
 ## Instrucciones para ejecutar el proyecto localmente
 
-> El sistema está dividido en 3 repositorios. Clona los tres (`PortIA_Web`, `PortIA_Core`, `PortIA_Agentes`) dentro de una misma carpeta raíz, al mismo nivel entre ellos.
+Todo el código (Web, Core y Agentes) vive en este único repositorio. La forma recomendada de ejecutarlo es con Docker, que levanta la infraestructura y los tres proyectos con un solo comando.
 
 ### Requisitos previos
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-- [Node.js LTS](https://nodejs.org/) y Angular CLI (`npm install -g @angular/cli`), solo si quieres correr el frontend en modo desarrollo
+- [Git](https://git-scm.com/)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) abierto y en ejecución (incluye Docker Compose)
+- Una API key de [OpenRouter](https://openrouter.ai/) para que el agente lector pueda extraer datos de documentos con IA (el resto del sistema funciona sin ella)
+- Opcional, solo para desarrollo sin Docker: [Node.js 22](https://nodejs.org/), [.NET SDK 10](https://dotnet.microsoft.com/download) y [Python 3.11+](https://www.python.org/downloads/)
 
-### 1. Clonar los repositorios
+### Opción A: todo con Docker (recomendada)
+
+**1. Clonar el repositorio**
 
 ```bash
 git clone https://github.com/IgnacioAndrade1609/PortIA_Web.git
-git clone https://github.com/IgnacioAndrade1609/PortIA_Core.git
-git clone https://github.com/IgnacioAndrade1609/PortIA_Agentes.git
+cd PortIA_Web
+git checkout develop
 ```
 
-Deben quedar los tres en la misma carpeta, al mismo nivel:
+**2. Crear el archivo de configuración de los agentes**
 
-```
-CAPSTONE/
-├── PortIA_Web/
-├── PortIA_Core/
-└── PortIA_Agentes/
-```
-
-### 2. Levantar todo el backend con Docker
-
-El archivo `docker-compose.yml` vive en este mismo repositorio (`PortIA_Web`). Cópialo a la carpeta raíz `CAPSTONE/` (un nivel arriba de los 3 repos) y ejecuta, desde ahí:
+Los secretos no se suben al repositorio, por eso hay que crear tu copia local a partir de la plantilla.
 
 ```bash
-docker-compose up --build
+cd docker
+cp agentes.env.example agentes.env
 ```
 
-Esto levanta 5 contenedores:
+En Windows PowerShell usa `Copy-Item agentes.env.example agentes.env`.
+
+Abre `docker/agentes.env` y completa `LLM_API_KEY=` con tu key de OpenRouter.
+
+**3. Construir y levantar todo**
+
+Estando dentro de la carpeta `docker/`:
+
+```bash
+docker compose up -d --build
+```
+
+La primera vez demora varios minutos, porque se descargan las imágenes y se instalan las dependencias de IA (PyTorch, Docling, Playwright). Las siguientes veces es mucho más rápido.
+
+**4. Verificar que todo esté corriendo**
+
+```bash
+docker compose ps
+```
+
+Deben aparecer 7 contenedores en estado `running`:
 
 | Servicio | Puerto local | Qué es |
 |---|---|---|
-| `portia-postgres` | `5433` | Base de datos PostgreSQL |
-| `portia-minio` | `9000` (API) / `9001` (consola web) | Almacenamiento de objetos (simula Cloudflare R2) |
-| `portia-redis` | `6379` | Caché en memoria |
+| `portia-web` | `4200` | Frontend Angular servido con Nginx |
 | `portia-core` | `8080` | API del Core en .NET 10 |
-| `portia-agentes` | `8000` | Agente de IA en Python (FastAPI) |
+| `portia-agentes` | `8000` | Agentes de IA en Python (FastAPI) |
+| `portia-postgres` | `5433` | Base de datos PostgreSQL |
+| `portia-minio` | `9000` (API) / `9001` (consola) | Almacenamiento de objetos (simula Cloudflare R2) |
+| `portia-redis` | `6379` | Caché en memoria |
+| `portia-rabbitmq` | `5672` / `15672` (consola) | Bus de mensajería |
 
-> Nota: PostgreSQL corre en el puerto `5433` (no el `5432` estándar) porque suele chocar con instalaciones locales de PostgreSQL ya existentes en el computador.
+> PostgreSQL usa el puerto `5433` (no el `5432` estándar) para no chocar con instalaciones locales de PostgreSQL.
 
-### 3. Verificar que todo esté corriendo
+**5. Cargar los datos de prueba**
+
+La base de datos parte vacía (el Core crea las tablas al arrancar, pero no hay usuarios). Carga los datos de desarrollo, estando en `docker/`:
 
 ```bash
-docker ps
+docker compose exec postgres psql -U portia -d portia_db -f /seeds/seed-dev.sql
+docker compose exec postgres psql -U portia -d portia_db -f /seeds/seed-demo.sql
 ```
 
-Deberías ver los 5 contenedores con estado `Up`.
+Si usas Git Bash en Windows, antepón `MSYS_NO_PATHCONV=1` a cada comando. Los scripts se pueden ejecutar más de una vez sin duplicar datos.
 
+- `seed-dev.sql`: los 3 usuarios base, terminales y 3 contenedores con distintos niveles de riesgo.
+- `seed-demo.sql`: datos para la demostración (más usuarios, navieras, contenedores, hitos, documentos y alertas). Cárgalo después de `seed-dev.sql`.
+
+Usuarios de prueba (contraseña de todos: `portia123`):
+
+| Correo | Rol |
+|---|---|
+| `analista@portia.cl` | Analista |
+| `jefe@portia.cl` | Jefe |
+| `admin@portia.cl` | Admin |
+
+Son datos solo para desarrollo, no deben usarse en un ambiente real.
+
+**6. Abrir la aplicación**
+
+- **Aplicación web:** http://localhost:4200
 - **API del Core (Swagger):** http://localhost:8080/swagger
-- **API del Agente (Docs):** http://localhost:8000/docs
+- **API de Agentes (Docs):** http://localhost:8000/docs
 - **Consola de MinIO:** http://localhost:9001 (usuario `portia`, contraseña `portia12345`)
-- **PostgreSQL:** conéctate con [DBeaver](https://dbeaver.io/) u otro cliente a `localhost:5433`, base `portia_db`, usuario `portia`, contraseña `portia123`
+- **Consola de RabbitMQ:** http://localhost:15672 (usuario `guest`, contraseña `guest`)
+- **PostgreSQL:** con [DBeaver](https://dbeaver.io/) u otro cliente en `localhost:5433`, base `portia_db`, usuario `portia`, contraseña `portia123`
 
-### 4. Levantar el frontend en modo desarrollo
-
-El frontend Angular no está dockerizado (se ejecuta en modo desarrollo):
+**Comandos útiles** (desde `docker/`)
 
 ```bash
-cd PortIA_Web
+docker compose logs -f core
+docker compose restart agentes
+docker compose down
+docker compose down -v
+```
+
+`down -v` además borra los datos de PostgreSQL y MinIO.
+
+### Opción B: desarrollo sin Docker para cada proyecto
+
+Levanta primero solo la infraestructura:
+
+```bash
+cd docker
+docker compose up -d postgres minio redis rabbitmq
+```
+
+Luego, en terminales separadas desde la raíz del repositorio:
+
+```bash
+cd Core
+dotnet run --project PortIA.Core.WebApi
+```
+
+```bash
+cd Agentes
+python -m venv .venv
+.venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload --port 8000
+```
+
+```bash
+cd Web
 npm install
 npm start
 ```
 
-La aplicación queda disponible en http://localhost:4200
+En Linux o macOS, el entorno virtual se activa con `source .venv/bin/activate`. El frontend en modo desarrollo queda en http://localhost:4200 y espera el Core en `http://localhost:8080`.
+
+Para correr las pruebas:
+
+```bash
+cd Core && dotnet test PortIA.Core.sln
+cd Agentes && pip install -r requirements-dev.txt && pytest
+cd Web && npm test -- --no-watch
+```
+
+### Estructura de la carpeta Docker
+
+```
+docker/
+├── docker-compose.yml
+├── agentes.env.example
+├── db/seed-dev.sql, seed-demo.sql
+├── core/Dockerfile
+├── agentes/Dockerfile
+└── web/
+    ├── Dockerfile
+    └── nginx.conf
+```
 
 ---
 
@@ -208,7 +302,7 @@ El equipo trabaja bajo **Scrum**, con **sprints de dos semanas** a lo largo de l
 
 ## Documentación adicional
 
-La documentación extendida del proyecto (especificaciones de arquitectura, catálogo de casos de uso, storyboards, análisis de cumplimiento normativo) se encuentra en la carpeta Fase 01/ de este repositorio.
+La documentación extendida del proyecto (especificaciones de arquitectura, catálogo de casos de uso, storyboards, análisis de cumplimiento normativo) se encuentra en las carpetas `Fase 1/` y `Fase 2/` de este repositorio.
 
 ---
 
