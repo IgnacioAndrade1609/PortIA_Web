@@ -73,10 +73,6 @@ services:
       - redis
       - rabbitmq
 
-volumes:
-  postgres_data:
-  minio_data:
-
   web:
     build: ./Web
     container_name: portia-web
@@ -84,3 +80,7 @@ volumes:
       - "4200:80"
     depends_on:
       - core
+
+volumes:
+  postgres_data:
+  minio_data:
