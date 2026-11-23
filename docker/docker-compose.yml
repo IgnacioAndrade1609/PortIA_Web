@@ -1,3 +1,5 @@
+name: portia
+
 services:
   postgres:
     image: postgres:16
@@ -43,7 +45,9 @@ services:
       retries: 5
 
   core:
-    build: ./Core
+    build:
+      context: ../Core
+      dockerfile: ../docker/core/Dockerfile
     container_name: portia-core
     ports:
       - "8080:8080"
@@ -55,14 +59,26 @@ services:
       Minio__AccessKey: "portia"
       Minio__SecretKey: "portia12345"
       Minio__WithSSL: "false"
+      Jwt__Issuer: "PortIA.Core"
+      Jwt__Audience: "PortIA.Core.Clients"
+      Jwt__SecretKey: "portia-dev-secret-key-change-me-0123456789-abcdef"
+      Jwt__ExpiresInHours: "8"
     depends_on:
-      - postgres
-      - rabbitmq
-      - minio
+      postgres:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+      minio:
+        condition: service_started
+    restart: on-failure
 
   agentes:
-    build: ./Agentes
+    build:
+      context: ../Agentes
+      dockerfile: ../docker/agentes/Dockerfile
     container_name: portia-agentes
+    env_file:
+      - ./agentes.env
     ports:
       - "8000:8000"
     environment:
@@ -70,11 +86,18 @@ services:
       REDIS_URL: redis://redis:6379
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/
     depends_on:
-      - redis
-      - rabbitmq
+      redis:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    restart: on-failure
 
   web:
-    build: ./Web
+    build:
+      context: ../Web
+      dockerfile: ../docker/web/Dockerfile
+      additional_contexts:
+        nginx-conf: ./web
     container_name: portia-web
     ports:
       - "4200:80"
