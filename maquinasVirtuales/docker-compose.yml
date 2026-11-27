@@ -47,8 +47,8 @@ services:
 
   core:
     build:
-      context: ../Core
-      dockerfile: ../docker/core/Dockerfile
+      context: ../src/Core
+      dockerfile: ../../maquinasVirtuales/core/Dockerfile
     container_name: portia-core
     ports:
       - "8080:8080"
@@ -75,8 +75,8 @@ services:
 
   agentes:
     build:
-      context: ../Agentes
-      dockerfile: ../docker/agentes/Dockerfile
+      context: ../src/Agentes
+      dockerfile: ../../maquinasVirtuales/agentes/Dockerfile
     container_name: portia-agentes
     env_file:
       - ./agentes.env
@@ -95,8 +95,8 @@ services:
 
   web:
     build:
-      context: ../Web
-      dockerfile: ../docker/web/Dockerfile
+      context: ../src/Web
+      dockerfile: ../../maquinasVirtuales/web/Dockerfile
       additional_contexts:
         nginx-conf: ./web
     container_name: portia-web

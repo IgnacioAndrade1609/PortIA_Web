@@ -54,7 +54,7 @@ PortIA está construido bajo **N-Capas** sobre .NET 10, aplicando el **Principio
 
 El punto más importante de la arquitectura es la **estrategia dual de verificación portuaria**: el sistema intenta primero obtener el estado real de un contenedor mediante *web scraping* (`ScrapingStrategy`, con Playwright) contra el portal del terminal. Si esa estrategia falla el portal cambia, se cae, o bloquea la IP, un mecanismo de **Circuit Breaker** conmuta automáticamente hacia una estrategia simulada (`MockStrategy`), garantizando que el sistema nunca se detenga por la volatilidad de un tercero.
 
-![Arquitectura de PortIA](Web/docs/images/arquitectura.png)
+![Arquitectura de PortIA](src/Web/docs/images/arquitectura.png)
 
 ### Capas del sistema
 
@@ -80,10 +80,10 @@ Todo el proyecto (código fuente y documentación) está unificado en este únic
 
 | Carpeta | Contenido | Tecnología principal |
 |---|---|---|
-| [`Web/`](Web) | Cliente web y dashboard de control | Angular |
-| [`Core/`](Core) | Orquestador central: ingesta, motor de reglas, notificaciones en tiempo real | .NET 10 / C# |
-| [`Agentes/`](Agentes) | Microservicios de IA: lectura de documentos e inspección portuaria | Python |
-| [`docker/`](docker) | Dockerfiles y `docker-compose.yml` para levantar todo el sistema | Docker |
+| [`src/Web/`](src/Web) | Cliente web y dashboard de control | Angular |
+| [`src/Core/`](src/Core) | Orquestador central: ingesta, motor de reglas, notificaciones en tiempo real | .NET 10 / C# |
+| [`src/Agentes/`](src/Agentes) | Microservicios de IA: lectura de documentos e inspección portuaria | Python |
+| [`maquinasVirtuales/`](maquinasVirtuales) | Dockerfiles, `docker-compose.yml` y datos de prueba para levantar todo el sistema | Docker |
 | `Fase 1/`, `Fase 2/` | Documentación y evidencias del proyecto de título | Documentos |
 
 
@@ -91,20 +91,20 @@ Todo el proyecto (código fuente y documentación) está unificado en este únic
 
 ## Tecnologías utilizadas
 
-### Frontend (Web/)
+### Frontend (src/Web/)
 
 - **Framework:** Angular
 - **Tiempo real:** SignalR (WebSockets) para recibir alertas del semáforo sin recargar la página
 - **UI/UX:** diseño orientado a sistema de semáforos de riesgo
 
-### Core (Core/)
+### Core (src/Core/)
 
 - **Framework:** ASP.NET Core 10
 - **Lenguaje:** C#
 - **Arquitectura:** N-Capas (PortIA.Core.WebApi / PortIA.Core.Services / PortIA.Core.DependencyInjection / PortIA.Core.Configuration)
 - **Base de datos:** PostgreSQL
 
-### Agentes de IA (Agentes/)
+### Agentes de IA (src/Agentes/)
 
 - **Lenguaje:** Python
 - **Framework:** FastAPI
@@ -147,17 +147,17 @@ git checkout develop
 Los secretos no se suben al repositorio, por eso hay que crear tu copia local a partir de la plantilla.
 
 ```bash
-cd docker
+cd maquinasVirtuales
 cp agentes.env.example agentes.env
 ```
 
 En Windows PowerShell usa `Copy-Item agentes.env.example agentes.env`.
 
-Abre `docker/agentes.env` y completa `LLM_API_KEY=` con tu key de OpenRouter.
+Abre `maquinasVirtuales/agentes.env` y completa `LLM_API_KEY=` con tu key de OpenRouter.
 
 **3. Construir y levantar todo**
 
-Estando dentro de la carpeta `docker/`:
+Estando dentro de la carpeta `maquinasVirtuales/`:
 
 ```bash
 docker compose up -d --build
@@ -187,7 +187,7 @@ Deben aparecer 7 contenedores en estado `running`:
 
 **5. Cargar los datos de prueba**
 
-La base de datos parte vacía (el Core crea las tablas al arrancar, pero no hay usuarios). Carga los datos de desarrollo, estando en `docker/`:
+La base de datos parte vacía (el Core crea las tablas al arrancar, pero no hay usuarios). Carga los datos de desarrollo, estando en `maquinasVirtuales/`:
 
 ```bash
 docker compose exec postgres psql -U portia -d portia_db -f /seeds/seed-dev.sql
@@ -218,7 +218,7 @@ Son datos solo para desarrollo, no deben usarse en un ambiente real.
 - **Consola de RabbitMQ:** http://localhost:15672 (usuario `guest`, contraseña `guest`)
 - **PostgreSQL:** con [DBeaver](https://dbeaver.io/) u otro cliente en `localhost:5433`, base `portia_db`, usuario `portia`, contraseña `portia123`
 
-**Comandos útiles** (desde `docker/`)
+**Comandos útiles** (desde `maquinasVirtuales/`)
 
 ```bash
 docker compose logs -f core
@@ -234,19 +234,19 @@ docker compose down -v
 Levanta primero solo la infraestructura:
 
 ```bash
-cd docker
+cd maquinasVirtuales
 docker compose up -d postgres minio redis rabbitmq
 ```
 
 Luego, en terminales separadas desde la raíz del repositorio:
 
 ```bash
-cd Core
+cd src/Core
 dotnet run --project PortIA.Core.WebApi
 ```
 
 ```bash
-cd Agentes
+cd src/Agentes
 python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
@@ -254,7 +254,7 @@ uvicorn main:app --reload --port 8000
 ```
 
 ```bash
-cd Web
+cd src/Web
 npm install
 npm start
 ```
@@ -264,18 +264,20 @@ En Linux o macOS, el entorno virtual se activa con `source .venv/bin/activate`. 
 Para correr las pruebas:
 
 ```bash
-cd Core && dotnet test PortIA.Core.sln
-cd Agentes && pip install -r requirements-dev.txt && pytest
-cd Web && npm test -- --no-watch
+cd src/Core && dotnet test PortIA.Core.sln
+cd src/Agentes && pip install -r requirements-dev.txt && pytest
+cd src/Web && npm test -- --no-watch
 ```
 
-### Estructura de la carpeta Docker
+### Estructura de la carpeta maquinasVirtuales
 
 ```
-docker/
+maquinasVirtuales/
 ├── docker-compose.yml
 ├── agentes.env.example
-├── db/seed-dev.sql, seed-demo.sql
+├── db/
+│   ├── seed-dev.sql
+│   └── seed-demo.sql
 ├── core/Dockerfile
 ├── agentes/Dockerfile
 └── web/
@@ -308,4 +310,4 @@ La documentación extendida del proyecto (especificaciones de arquitectura, cat�
 
 ## Licencia
 
-Este proyecto se distribuye con fines académicos, en el marco del proceso de Titulación de Ingeniería en Informática de Duoc UC.
+Este proyecto se distribuye con fines académicos, en el marco del proceso de Titulación de Ingeniería en Informática de Duoc UC. Está publicado bajo la licencia GPL-3.0 (ver el archivo [LICENSE](LICENSE)).
